@@ -1,0 +1,16 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0b1329;
+  background-image: linear-gradient(rgba(11, 19, 41, 0.75), rgba(11, 19, 41, 0.75)), 
+                    url('/plant-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  font-family: Arial, sans-serif;
+  color: #1e293b;
+}
+
+#root {
+  min-height: 100vh;
+}

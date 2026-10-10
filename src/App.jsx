@@ -123,9 +123,15 @@ function App() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '15px', width: '100%' }}>
         <form onSubmit={handleLogin} style={{ background: 'rgba(255, 255, 255, 0.96)', padding: '30px 20px', borderRadius: '12px', boxShadow: '0 15px 35px rgba(0,0,0,0.4)', width: '100%', maxWidth: '400px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
-          {/* Restored Company Logo on Login Screen */}
+          {/* Robust Logo display with text fallback if image is missing */}
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <img src="/logo.png" alt="Ambica-Hind Logo" style={{ width: '100%', height: 'auto', maxHeight: '75px', objectFit: 'contain', display: 'block' }} />
+            <img 
+              src={`${import.meta.env.BASE_URL}logo.png`} 
+              alt="Ambica-Hind Logo" 
+              style={{ width: '100%', height: 'auto', maxHeight: '70px', objectFit: 'contain', display: 'block', margin: '0 auto' }} 
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'block'; }}
+            />
+            <h2 style={{ display: 'none', color: '#0f172a', margin: 0, fontSize: '22px', fontWeight: '800' }}>AMBICA-HIND</h2>
           </div>
           <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 20px 0', fontWeight: '600' }}>Enterprise Resource & Operations Suite</p>
 
@@ -161,7 +167,7 @@ function App() {
   return (
     <div style={{ padding: '15px', width: '100%', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box', position: 'relative' }}>
       
-      {/* CEO Photo positioned lower down on the left side */}
+      {/* CEO Photo locked in the left sidebar slot below the navigation */}
       <div className="left-ceo-sidebar">
         <img src={ceoImage} alt="CEO" />
         <span>Leadership</span>

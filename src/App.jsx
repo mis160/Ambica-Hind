@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-// Direct imports for your local plant & certificate photos from src/assets/
 import plant1 from './assets/Plant1.jpg';
 import plant2 from './assets/Plant2.jpg';
 import plant3 from './assets/Plant3.jpg';
@@ -591,7 +590,7 @@ function App() {
           </section>
         )}
 
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Cycles through all your uploaded Plant photos) */}
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
         <div className="bottom-slideshow-section">
           <h4>Ambica-Hind Plant & Operations Gallery ({COMPANY_SLIDES.length} Photos)</h4>
           <div className="bottom-slideshow-container">
@@ -605,4 +604,4 @@ function App() {
   );
 }
 
-default App;
+export default App;

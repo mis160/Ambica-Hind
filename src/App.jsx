@@ -64,7 +64,8 @@ function App() {
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
-      // Always use the user's email initials for their header profile avatar
+      
+      // Use personal email initials avatar for the header
       setUserAvatar(`https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`);
       
       if (matchedUser.role === 'HR') setActiveModule('hr');
@@ -124,9 +125,16 @@ function App() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '15px', width: '100%' }}>
         <form onSubmit={handleLogin} style={{ background: 'rgba(255, 255, 255, 0.96)', padding: '30px 20px', borderRadius: '12px', boxShadow: '0 15px 35px rgba(0,0,0,0.4)', width: '100%', maxWidth: '400px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
-          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <img src="/logo.png" alt="Ambica-Hind Logo" style={{ width: '100%', height: 'auto', maxHeight: '75px', objectFit: 'contain', display: 'block' }} />
+          <div style={{ marginBottom: '15px', textAlign: 'center' }}>
+            <img src="/logo.png" alt="Ambica-Hind Logo" style={{ width: '100%', height: 'auto', maxHeight: '60px', objectFit: 'contain', display: 'block', marginBottom: '10px' }} />
           </div>
+
+          {/* CEO Photo Displayed on Login Screen */}
+          <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src={ceoImage} alt="CEO Leadership" style={{ width: '70px', height: '70px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb', marginBottom: '5px' }} />
+            <span style={{ fontSize: '11px', color: '#2563eb', fontWeight: 'bold' }}>Executive Leadership</span>
+          </div>
+
           <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 20px 0', fontWeight: '600' }}>Enterprise Resource & Operations Suite</p>
 
           {error && <p style={{ color: 'red', fontSize: '12px', marginBottom: '15px', lineHeight: '1.4' }}>{error}</p>}

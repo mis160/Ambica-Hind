@@ -64,7 +64,12 @@ function App() {
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
-      setUserAvatar(`https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`);
+      
+      // Use CEO photo for admin logins, otherwise default to initials badge
+      const avatarSrc = (matchedUser.email === 'dev@ambahind.com' || matchedUser.email === 'mis@ambahind.com')
+        ? ceoImage
+        : `https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`;
+      setUserAvatar(avatarSrc);
       
       if (matchedUser.role === 'HR') setActiveModule('hr');
       else if (matchedUser.role === 'Production') setActiveModule('production');

@@ -2,23 +2,22 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-// Sample plant & facility showcase images
 const PLANT_SLIDES = [
   { url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500', caption: 'Advanced Manufacturing Floor' },
   { url: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=500', caption: 'High-Capacity Furnace Unit' },
   { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500', caption: 'Precision Wire Drawing Line' }
 ];
 
-// Special International/Public Days Dictionary (Month-Day format)
 const SPECIAL_DAYS = {
   '1-1': 'New Year’s Day 🌍',
   '1-26': 'Republic Day (India) 🇮🇳',
   '3-8': 'International Women’s Day 👩',
-  '5-1': 'International Workers’ Day (May Day) 🛠️',
+  '5-1': 'International Workers’ Day 🛠️',
   '8-15': 'Independence Day (India) 🇮🇳',
   '10-2': 'Gandhi Jayanti 🇮🇳',
   '10-10': 'World Mental Health Day 🧠',
-  '11-14': 'Children’s Day / World Diabetes Day 👶',
+  '10-10': 'National Post Day 🇮🇳',
+  '11-14': 'Children’s Day 👶',
   '12-25': 'Christmas Day 🎄'
 };
 
@@ -40,18 +39,12 @@ function App() {
   const [activeModule, setActiveModule] = useState('production');
   const [error, setError] = useState('');
 
-  // Slideshow State
   const [currentSlide, setCurrentSlide] = useState(0);
-
-  // Clock State (IST)
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
   const [specialDayNote, setSpecialDayNote] = useState('');
-
-  // Calculator State
   const [calcInput, setCalcInput] = useState('0');
 
-  // Operational states...
   const [productionLogs, setProductionLogs] = useState([
     { id: 1, date: '2026-10-08', unit: 'Wire Plant (WD)', subDetail: 'Block 1', shift: 'Morning', prodId: 'PRD-001', loggedBy: 'Production Team' }
   ]);
@@ -77,29 +70,21 @@ function App() {
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
   ]);
 
-  // Live IST Clock & Slideshow Timer Effect
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      // IST Formatter
       const optionsTime = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
       const optionsDate = { timeZone: 'Asia/Kolkata', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
       
       setTimeStr(new Intl.DateTimeFormat('en-US', optionsTime).format(now));
       setDateStr(new Intl.DateTimeFormat('en-US', optionsDate).format(now));
 
-      // Check Special Day
       const monthKey = now.getMonth() + 1;
       const dayKey = now.getDate();
       const lookup = `${monthKey}-${dayKey}`;
-      if (SPECIAL_DAYS[lookup]) {
-        setSpecialDayNote(SPECIAL_DAYS[lookup]);
-      } else {
-        setSpecialDayNote('');
-      }
+      setSpecialDayNote(SPECIAL_DAYS[lookup] || 'Regular Operations Day 🏭');
     }, 1000);
 
-    // Slideshow interval (changes photo every 4 seconds)
     const slideTimer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % PLANT_SLIDES.length);
     }, 4000);
@@ -171,7 +156,6 @@ function App() {
     setRate('');
   };
 
-  // Calculator Handler
   const handleCalcBtn = (val) => {
     if (val === 'C') {
       setCalcInput('0');
@@ -232,24 +216,20 @@ function App() {
   return (
     <div className="app-layout-wrapper">
       
-      {/* LEFT SIDEBAR: Leadership, Slideshow, Clock/Calendar, Calculator */}
+      {/* LEFT SIDEBAR WIDGETS */}
       <div className="left-sidebar-column">
-        
-        {/* CEO Leadership Badge */}
         <div className="sidebar-card">
           <img src={ceoImage} alt="CEO" className="ceo-img" />
           <h4>Executive Leadership</h4>
           <span style={{ fontSize: '10px', color: '#94a3b8' }}>Ambica-Hind Group</span>
         </div>
 
-        {/* Plant Photo Slideshow */}
         <div className="sidebar-card slideshow-container">
           <h4>Plant Showcase</h4>
           <img src={PLANT_SLIDES[currentSlide].url} alt="Plant Slide" />
           <p>{PLANT_SLIDES[currentSlide].caption}</p>
         </div>
 
-        {/* Live IST Clock & Calendar Special Day Widget */}
         <div className="sidebar-card widget-box">
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
@@ -261,7 +241,6 @@ function App() {
           )}
         </div>
 
-        {/* Quick Compact Calculator */}
         <div className="sidebar-card widget-box">
           <h4>Quick Calculator</h4>
           <div className="calc-screen">{calcInput}</div>
@@ -271,10 +250,9 @@ function App() {
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* RIGHT COLUMN: Main Dashboard */}
+      {/* RIGHT MAIN CONTENT */}
       <div className="main-content-column">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

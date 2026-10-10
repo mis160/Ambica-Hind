@@ -2,53 +2,144 @@ body {
   margin: 0;
   background-color: #0f172a;
   font-family: system-ui, -apple-system, sans-serif;
+  color: #1e293b;
 }
 
-/* Two-column layout wrapper */
 .app-layout-wrapper {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  max-width: 1320px;
+  width: 100%;
+  max-width: 1550px;
   margin: 0 auto;
-  padding: 20px 15px;
-  gap: 20px;
+  padding: 15px;
+  gap: 15px;
   box-sizing: border-box;
 }
 
-/* Permanent Left Sidebar Column for CEO Badge */
-.left-ceo-column {
-  flex: 0 0 100px;
-  background: rgba(15, 23, 42, 0.95);
-  padding: 12px 8px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  text-align: center;
-  position: sticky;
-  top: 20px;
+/* Left Sidebar Column */
+.left-sidebar-column {
+  flex: 0 0 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.left-ceo-column img {
-  width: 75px;
-  height: 75px;
+.sidebar-card {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 12px;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.sidebar-card img.ceo-img {
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #38bdf8;
   display: block;
-  margin: 0 auto 6px auto;
+  margin: 0 auto 5px auto;
 }
 
-.left-ceo-column span {
-  font-size: 9px;
+.sidebar-card h4 {
+  margin: 0 0 6px 0;
+  font-size: 12px;
   color: #38bdf8;
-  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Main Dashboard Column */
+/* Slideshow Card */
+.slideshow-container img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.slideshow-container p {
+  font-size: 11px;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+/* Clock & Calendar Widget */
+.widget-box {
+  font-size: 12px;
+  text-align: left;
+}
+
+.clock-display {
+  font-size: 18px;
+  font-weight: bold;
+  color: #38bdf8;
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.special-day-banner {
+  background: #0284c7;
+  color: white;
+  font-size: 10px;
+  padding: 5px;
+  border-radius: 4px;
+  margin-top: 6px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Quick Calculator */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.calc-grid button {
+  padding: 6px;
+  background: #334155;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.calc-grid button:hover {
+  background: #2563eb;
+}
+
+.calc-screen {
+  width: 100%;
+  background: #020617;
+  color: #38bdf8;
+  text-align: right;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+/* Main Content Column */
 .main-content-column {
   flex: 1;
   min-width: 0;
+}
+
+@media (max-width: 1050px) {
+  .app-layout-wrapper {
+    flex-direction: column;
+  }
+  .left-sidebar-column {
+    width: 100%;
+  }
 }

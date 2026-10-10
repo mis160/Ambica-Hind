@@ -162,14 +162,15 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      {/* CEO Badge positioned safely in the left margin */}
-      <div className="left-ceo-sidebar">
+    <div className="app-layout-wrapper">
+      {/* Left Column: CEO Leadership Badge */}
+      <div className="left-ceo-column">
         <img src={ceoImage} alt="CEO" />
         <span>Leadership</span>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '1200px' }}>
+      {/* Right Column: Main Dashboard */}
+      <div className="main-content-column">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <img 

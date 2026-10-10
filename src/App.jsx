@@ -2,52 +2,14 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-import plant1 from './assets/Plant1.jpg';
-import plant2 from './assets/Plant2.jpg';
-import plant3 from './assets/Plant3.jpg';
-import plant4 from './assets/Plant4.jpg';
-import plant5 from './assets/Plant5.jpg';
-import plant6 from './assets/Plant6.jpg';
-import plant7 from './assets/Plant7.jpg';
-import plant8 from './assets/Plant8.jpg';
-import plant9 from './assets/Plant9.jpg';
-import plant10 from './assets/Plant10.jpg';
-import plant11 from './assets/Plant11.jpg';
-import plant12 from './assets/Plant12.jpg';
-import plant13 from './assets/Plant13.jpg';
-import plant14 from './assets/Plant14.jpg';
-import plant15 from './assets/Plant15.jpg';
-import plant16 from './assets/Plant16.jpg';
-import plant17 from './assets/Plant17.jpg';
-import plant19 from './assets/Plant19.png';
-import plant20 from './assets/Plant20.jpg';
-import plant21 from './assets/Plant21.jpg';
-import plant22 from './assets/Plant22.jpg';
+// Automatically load all Plant photos & certificates from src/assets/ without manual imports
+const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
+const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod, index) => ({
+  url: mod.default,
+  caption: index < 12 ? `Ambica-Hind Plant View ${index + 1}` : `Ambica-Hind Certificate & Showcase ${index + 1}`
+}));
 
-const COMPANY_SLIDES = [
-  { url: plant1, caption: 'Ambica-Hind Plant View 1' },
-  { url: plant2, caption: 'Ambica-Hind Plant View 2' },
-  { url: plant3, caption: 'Ambica-Hind Plant View 3' },
-  { url: plant4, caption: 'Ambica-Hind Plant View 4' },
-  { url: plant5, caption: 'Ambica-Hind Plant View 5' },
-  { url: plant6, caption: 'Ambica-Hind Plant View 6' },
-  { url: plant7, caption: 'Ambica-Hind Plant View 7' },
-  { url: plant8, caption: 'Ambica-Hind Plant View 8' },
-  { url: plant9, caption: 'Ambica-Hind Plant View 9' },
-  { url: plant10, caption: 'Ambica-Hind Plant View 10' },
-  { url: plant11, caption: 'Ambica-Hind Plant View 11' },
-  { url: plant12, caption: 'Ambica-Hind Plant View 12' },
-  { url: plant13, caption: 'Certificate of Registration 13' },
-  { url: plant14, caption: 'Certificate of Registration 14' },
-  { url: plant15, caption: 'Certificate of Registration 15' },
-  { url: plant16, caption: 'Certificate of Registration 16' },
-  { url: plant17, caption: 'Plant Operations 17' },
-  { url: plant19, caption: 'Zinc India Showcase 19' },
-  { url: plant20, caption: 'Zinc India Showcase 20' },
-  { url: plant21, caption: 'Zinc India Showcase 21' },
-  { url: plant22, caption: 'Zinc India Showcase 22' }
-];
-
+// Holiday Hierarchy: 1. West Bengal, 2. National India, 3. International
 const HOLIDAYS = {
   wb: {
     '4-14': 'Poila Boishakh (Bengali New Year) 🌸',
@@ -149,7 +111,9 @@ function App() {
     }, 1000);
 
     const slideTimer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % COMPANY_SLIDES.length);
+      if (COMPANY_SLIDES.length > 0) {
+        setCurrentSlide((prev) => (prev + 1) % COMPANY_SLIDES.length);
+      }
     }, 4500);
 
     return () => {
@@ -592,10 +556,16 @@ function App() {
 
         {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
         <div className="bottom-slideshow-section">
-          <h4>Ambica-Hind Plant & Operations Gallery ({COMPANY_SLIDES.length} Photos)</h4>
+          <h4>Ambica-Hind Plant & Operations Gallery ({COMPANY_SLIDES.length} Photos Loaded)</h4>
           <div className="bottom-slideshow-container">
-            <img src={COMPANY_SLIDES[currentSlide].url} alt="Company Slide" />
-            <p>{COMPANY_SLIDES[currentSlide].caption} (Photo {currentSlide + 1} of {COMPANY_SLIDES.length})</p>
+            {COMPANY_SLIDES.length > 0 ? (
+              <>
+                <img src={COMPANY_SLIDES[currentSlide]?.url} alt="Company Slide" />
+                <p>{COMPANY_SLIDES[currentSlide]?.caption} (Photo {currentSlide + 1} of {COMPANY_SLIDES.length})</p>
+              </>
+            ) : (
+              <p>Loading gallery images...</p>
+            )}
           </div>
         </div>
 

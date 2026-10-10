@@ -64,12 +64,8 @@ function App() {
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
-      
-      // Use CEO photo for admin logins, otherwise default to initials badge
-      const avatarSrc = (matchedUser.email === 'dev@ambahind.com' || matchedUser.email === 'mis@ambahind.com')
-        ? ceoImage
-        : `https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`;
-      setUserAvatar(avatarSrc);
+      // Always use the user's email initials for their header profile avatar
+      setUserAvatar(`https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`);
       
       if (matchedUser.role === 'HR') setActiveModule('hr');
       else if (matchedUser.role === 'Production') setActiveModule('production');
@@ -427,7 +423,7 @@ function App() {
             </div>
 
             <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-              <img src={ceoImage} alt="CEO" style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #2563eb', margin: '0 auto 10px auto', display: 'block' }} />
+              <img src={ceoImage} alt="CEO" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #2563eb', margin: '0 auto 10px auto', display: 'block' }} />
               <h4 style={{ margin: '0 0 3px 0', color: '#1e293b', fontSize: '16px' }}>Executive Leadership</h4>
               <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 'bold', margin: '0 0 8px 0' }}>Ambica-Hind Group</p>
               <p style={{ color: '#475569', lineHeight: '1.5', fontSize: '13px', textAlign: 'left' }}>Guided by experienced leadership, expanding our footprint in non-ferrous and wire manufacturing.</p>

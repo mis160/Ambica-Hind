@@ -2,23 +2,75 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-// You can add your company photos in src/assets/ and import them here, or use online URLs
+// Direct imports for your local plant & certificate photos from src/assets/
+import plant1 from './assets/Plant1.jpg';
+import plant2 from './assets/Plant2.jpg';
+import plant3 from './assets/Plant3.jpg';
+import plant4 from './assets/Plant4.jpg';
+import plant5 from './assets/Plant5.jpg';
+import plant6 from './assets/Plant6.jpg';
+import plant7 from './assets/Plant7.jpg';
+import plant8 from './assets/Plant8.jpg';
+import plant9 from './assets/Plant9.jpg';
+import plant10 from './assets/Plant10.jpg';
+import plant11 from './assets/Plant11.jpg';
+import plant12 from './assets/Plant12.jpg';
+import plant13 from './assets/Plant13.jpg';
+import plant14 from './assets/Plant14.jpg';
+import plant15 from './assets/Plant15.jpg';
+import plant16 from './assets/Plant16.jpg';
+import plant17 from './assets/Plant17.jpg';
+import plant19 from './assets/Plant19.png';
+import plant20 from './assets/Plant20.jpg';
+import plant21 from './assets/Plant21.jpg';
+import plant22 from './assets/Plant22.jpg';
+
 const COMPANY_SLIDES = [
-  { url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800', caption: 'Advanced Manufacturing & Plant Floor' },
-  { url: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800', caption: 'High-Capacity Furnace & Processing Unit' },
-  { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800', caption: 'Precision Wire Drawing & Quality Control' }
+  { url: plant1, caption: 'Ambica-Hind Plant View 1' },
+  { url: plant2, caption: 'Ambica-Hind Plant View 2' },
+  { url: plant3, caption: 'Ambica-Hind Plant View 3' },
+  { url: plant4, caption: 'Ambica-Hind Plant View 4' },
+  { url: plant5, caption: 'Ambica-Hind Plant View 5' },
+  { url: plant6, caption: 'Ambica-Hind Plant View 6' },
+  { url: plant7, caption: 'Ambica-Hind Plant View 7' },
+  { url: plant8, caption: 'Ambica-Hind Plant View 8' },
+  { url: plant9, caption: 'Ambica-Hind Plant View 9' },
+  { url: plant10, caption: 'Ambica-Hind Plant View 10' },
+  { url: plant11, caption: 'Ambica-Hind Plant View 11' },
+  { url: plant12, caption: 'Ambica-Hind Plant View 12' },
+  { url: plant13, caption: 'Certificate of Registration 13' },
+  { url: plant14, caption: 'Certificate of Registration 14' },
+  { url: plant15, caption: 'Certificate of Registration 15' },
+  { url: plant16, caption: 'Certificate of Registration 16' },
+  { url: plant17, caption: 'Plant Operations 17' },
+  { url: plant19, caption: 'Zinc India Showcase 19' },
+  { url: plant20, caption: 'Zinc India Showcase 20' },
+  { url: plant21, caption: 'Zinc India Showcase 21' },
+  { url: plant22, caption: 'Zinc India Showcase 22' }
 ];
 
-const SPECIAL_DAYS = {
-  '1-1': 'New Year’s Day 🌍',
-  '1-26': 'Republic Day (India) 🇮🇳',
-  '3-8': 'International Women’s Day 👩',
-  '5-1': 'International Workers’ Day 🛠️',
-  '8-15': 'Independence Day (India) 🇮🇳',
-  '10-2': 'Gandhi Jayanti 🇮🇳',
-  '10-10': 'World Mental Health Day / National Post Day 🧠',
-  '11-14': 'Children’s Day 👶',
-  '12-25': 'Christmas Day 🎄'
+const HOLIDAYS = {
+  wb: {
+    '4-14': 'Poila Boishakh (Bengali New Year) 🌸',
+    '5-9': 'Rabindra Jayanti 🎶',
+    '8-22': 'Durga Puja (Maha Sasthi) 🪔',
+    '10-20': 'Kali Puja / Diptotsava 🪔',
+    '1-23': 'Netaji Subhas Chandra Bose Jayanti 🇮🇳'
+  },
+  national: {
+    '1-26': 'Republic Day (India) 🇮🇳',
+    '8-15': 'Independence Day (India) 🇮🇳',
+    '10-2': 'Gandhi Jayanti 🇮🇳',
+    '10-10': 'National Post Day 📬',
+    '11-14': 'Children’s Day 👶'
+  },
+  international: {
+    '1-1': 'New Year’s Day 🌍',
+    '3-8': 'International Women’s Day 👩',
+    '5-1': 'International Workers’ Day (May Day) 🛠️',
+    '10-10': 'World Mental Health Day 🧠',
+    '12-25': 'Christmas Day 🎄'
+  }
 };
 
 const AUTHORIZED_USERS = [
@@ -82,7 +134,19 @@ function App() {
       const monthKey = now.getMonth() + 1;
       const dayKey = now.getDate();
       const lookup = `${monthKey}-${dayKey}`;
-      setSpecialDayNote(SPECIAL_DAYS[lookup] || 'Regular Operations Day 🏭');
+
+      let resolvedDay = '';
+      if (HOLIDAYS.wb[lookup]) {
+        resolvedDay = `${HOLIDAYS.wb[lookup]} (WB)`;
+      } else if (HOLIDAYS.national[lookup]) {
+        resolvedDay = `${HOLIDAYS.national[lookup]} (India)`;
+      } else if (HOLIDAYS.international[lookup]) {
+        resolvedDay = `${HOLIDAYS.international[lookup]} (Intl)`;
+      } else {
+        resolvedDay = 'Regular Operations Day 🏭';
+      }
+
+      setSpecialDayNote(resolvedDay);
     }, 1000);
 
     const slideTimer = setInterval(() => {
@@ -216,16 +280,13 @@ function App() {
   return (
     <div className="app-layout-wrapper">
       
-      {/* LEFT SIDEBAR: Small CEO Badge on top, Tools (Clock & Calculator) below */}
+      {/* LEFT SIDEBAR */}
       <div className="left-sidebar-column">
-        
-        {/* CEO Leadership Badge */}
         <div className="sidebar-card">
           <img src={ceoImage} alt="CEO" className="ceo-img" />
           <h4>Leadership</h4>
         </div>
 
-        {/* Live IST Clock & Calendar Special Day Widget */}
         <div className="sidebar-card widget-box">
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
@@ -237,7 +298,6 @@ function App() {
           )}
         </div>
 
-        {/* Quick Calculator */}
         <div className="sidebar-card widget-box">
           <h4>Quick Calculator</h4>
           <div className="calc-screen">{calcInput}</div>
@@ -247,10 +307,9 @@ function App() {
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* RIGHT COLUMN: Main Dashboard */}
+      {/* RIGHT COLUMN */}
       <div className="main-content-column">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -532,12 +591,12 @@ function App() {
           </section>
         )}
 
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Sky-blue / red lined area) */}
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Cycles through all your uploaded Plant photos) */}
         <div className="bottom-slideshow-section">
-          <h4>Ambica-Hind Plant & Operations Gallery</h4>
+          <h4>Ambica-Hind Plant & Operations Gallery ({COMPANY_SLIDES.length} Photos)</h4>
           <div className="bottom-slideshow-container">
             <img src={COMPANY_SLIDES[currentSlide].url} alt="Company Slide" />
-            <p>{COMPANY_SLIDES[currentSlide].caption}</p>
+            <p>{COMPANY_SLIDES[currentSlide].caption} (Photo {currentSlide + 1} of {COMPANY_SLIDES.length})</p>
           </div>
         </div>
 
@@ -546,4 +605,4 @@ function App() {
   );
 }
 
-export default App;
+default App;

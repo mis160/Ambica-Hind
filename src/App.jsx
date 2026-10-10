@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-const PLANT_SLIDES = [
-  { url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500', caption: 'Advanced Manufacturing Floor' },
-  { url: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=500', caption: 'High-Capacity Furnace Unit' },
-  { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=500', caption: 'Precision Wire Drawing Line' }
+// You can add your company photos in src/assets/ and import them here, or use online URLs
+const COMPANY_SLIDES = [
+  { url: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800', caption: 'Advanced Manufacturing & Plant Floor' },
+  { url: 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800', caption: 'High-Capacity Furnace & Processing Unit' },
+  { url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800', caption: 'Precision Wire Drawing & Quality Control' }
 ];
 
 const SPECIAL_DAYS = {
@@ -15,8 +16,7 @@ const SPECIAL_DAYS = {
   '5-1': 'International Workers’ Day 🛠️',
   '8-15': 'Independence Day (India) 🇮🇳',
   '10-2': 'Gandhi Jayanti 🇮🇳',
-  '10-10': 'World Mental Health Day 🧠',
-  '10-10': 'National Post Day 🇮🇳',
+  '10-10': 'World Mental Health Day / National Post Day 🧠',
   '11-14': 'Children’s Day 👶',
   '12-25': 'Christmas Day 🎄'
 };
@@ -86,8 +86,8 @@ function App() {
     }, 1000);
 
     const slideTimer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % PLANT_SLIDES.length);
-    }, 4000);
+      setCurrentSlide((prev) => (prev + 1) % COMPANY_SLIDES.length);
+    }, 4500);
 
     return () => {
       clearInterval(timer);
@@ -216,31 +216,28 @@ function App() {
   return (
     <div className="app-layout-wrapper">
       
-      {/* LEFT SIDEBAR WIDGETS */}
+      {/* LEFT SIDEBAR: Small CEO Badge on top, Tools (Clock & Calculator) below */}
       <div className="left-sidebar-column">
+        
+        {/* CEO Leadership Badge */}
         <div className="sidebar-card">
           <img src={ceoImage} alt="CEO" className="ceo-img" />
-          <h4>Executive Leadership</h4>
-          <span style={{ fontSize: '10px', color: '#94a3b8' }}>Ambica-Hind Group</span>
+          <h4>Leadership</h4>
         </div>
 
-        <div className="sidebar-card slideshow-container">
-          <h4>Plant Showcase</h4>
-          <img src={PLANT_SLIDES[currentSlide].url} alt="Plant Slide" />
-          <p>{PLANT_SLIDES[currentSlide].caption}</p>
-        </div>
-
+        {/* Live IST Clock & Calendar Special Day Widget */}
         <div className="sidebar-card widget-box">
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>{dateStr}</div>
+          <div style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center' }}>{dateStr}</div>
           {specialDayNote && (
             <div className="special-day-banner">
-              ⭐ Today: {specialDayNote}
+              ⭐ {specialDayNote}
             </div>
           )}
         </div>
 
+        {/* Quick Calculator */}
         <div className="sidebar-card widget-box">
           <h4>Quick Calculator</h4>
           <div className="calc-screen">{calcInput}</div>
@@ -250,9 +247,10 @@ function App() {
             ))}
           </div>
         </div>
+
       </div>
 
-      {/* RIGHT MAIN CONTENT */}
+      {/* RIGHT COLUMN: Main Dashboard */}
       <div className="main-content-column">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -533,6 +531,16 @@ function App() {
             </div>
           </section>
         )}
+
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Sky-blue / red lined area) */}
+        <div className="bottom-slideshow-section">
+          <h4>Ambica-Hind Plant & Operations Gallery</h4>
+          <div className="bottom-slideshow-container">
+            <img src={COMPANY_SLIDES[currentSlide].url} alt="Company Slide" />
+            <p>{COMPANY_SLIDES[currentSlide].caption}</p>
+          </div>
+        </div>
+
       </div>
     </div>
   );

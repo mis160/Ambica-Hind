@@ -64,7 +64,6 @@ function App() {
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
-      // User's personal email initials badge
       setUserAvatar(`https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`);
       
       if (matchedUser.role === 'HR') setActiveModule('hr');
@@ -124,6 +123,7 @@ function App() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '15px', width: '100%' }}>
         <form onSubmit={handleLogin} style={{ background: 'rgba(255, 255, 255, 0.96)', padding: '30px 20px', borderRadius: '12px', boxShadow: '0 15px 35px rgba(0,0,0,0.4)', width: '100%', maxWidth: '400px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
+          {/* Restored Company Logo on Login Screen */}
           <div style={{ marginBottom: '20px', textAlign: 'center' }}>
             <img src="/logo.png" alt="Ambica-Hind Logo" style={{ width: '100%', height: 'auto', maxHeight: '75px', objectFit: 'contain', display: 'block' }} />
           </div>
@@ -161,13 +161,12 @@ function App() {
   return (
     <div style={{ padding: '15px', width: '100%', maxWidth: '1200px', margin: '0 auto', boxSizing: 'border-box', position: 'relative' }}>
       
-      {/* CEO Photo positioned in the left margin area exactly where requested */}
+      {/* CEO Photo positioned lower down on the left side */}
       <div className="left-ceo-sidebar">
         <img src={ceoImage} alt="CEO" />
         <span>Leadership</span>
       </div>
 
-      {/* Main Header with User Initials Badge (MI) and Email Info completely unchanged */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <img 

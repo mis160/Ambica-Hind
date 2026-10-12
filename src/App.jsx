@@ -551,7 +551,7 @@ function App() {
           </section>
         )}
 
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Text captions removed) */}
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Completely clean image frame with zero text lines) */}
         <div className="bottom-slideshow-section">
           <div className="bottom-slideshow-container">
             {COMPANY_SLIDES.length > 0 ? (
@@ -567,4 +567,4 @@ function App() {
   );
 }
 
-export default App;
+default App;

@@ -7,28 +7,20 @@ const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
   url: mod.default
 }));
 
-const HOLIDAYS = {
-  wb: {
-    '4-14': 'Poila Boishakh (Bengali New Year) 🌸',
-    '5-9': 'Rabindra Jayanti 🎶',
-    '8-22': 'Durga Puja (Maha Sasthi) 🪔',
-    '10-20': 'Kali Puja / Diptotsava 🪔',
-    '1-23': 'Netaji Subhas Chandra Bose Jayanti 🇮🇳'
-  },
-  national: {
-    '1-26': 'Republic Day (India) 🇮🇳',
-    '8-15': 'Independence Day (India) 🇮🇳',
-    '10-2': 'Gandhi Jayanti 🇮🇳',
-    '10-10': 'National Post Day 📬',
-    '11-14': 'Children’s Day 👶'
-  },
-  international: {
-    '1-1': 'New Year’s Day 🌍',
-    '3-8': 'International Women’s Day 👩',
-    '5-1': 'International Workers’ Day (May Day) 🛠️',
-    '10-10': 'World Mental Health Day 🧠',
-    '12-25': 'Christmas Day 🎄'
-  }
+// Official Company 2026 Holiday Master List (from company records)
+const COMPANY_HOLIDAYS_2026 = {
+  '2026-01-23': { occasion: "Saraswati Puja / Netaji's Birthday", status: 'Fully Closed' },
+  '2026-01-26': { occasion: 'Republic Day (National)', status: 'Fully Closed' },
+  '2026-03-03': { occasion: 'Dol Yatra', status: 'Fully Closed' },
+  '2026-04-15': { occasion: 'Bengali New Year', status: 'Fully Closed' },
+  '2026-05-01': { occasion: 'May Day (National)', status: 'Fully Closed' },
+  '2026-08-15': { occasion: 'Independence Day (National)', status: 'Fully Closed' },
+  '2026-10-18': { occasion: 'Saptami Puja', status: 'Fully Closed' },
+  '2026-10-19': { occasion: 'Astami Puja', status: 'Fully Closed' },
+  '2026-10-20': { occasion: 'Navami Puja', status: 'Fully Closed' },
+  '2026-10-21': { occasion: 'Dasami Puja', status: 'Fully Closed' },
+  '2026-11-09': { occasion: 'Diwali', status: 'Fully Closed' },
+  '2026-12-25': { occasion: 'Christmas', status: 'Fully Closed' }
 };
 
 const AUTHORIZED_USERS = [
@@ -52,7 +44,11 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
-  const [specialDayNote, setSpecialDayNote] = useState('');
+  
+  // Interactive Calendar Date Picker State (default to today's date YYYY-MM-DD)
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedHolidayInfo, setSelectedHolidayInfo] = useState(null);
+
   const [calcInput, setCalcInput] = useState('0');
 
   const [productionLogs, setProductionLogs] = useState([
@@ -80,6 +76,15 @@ function App() {
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
   ]);
 
+  // Check selected date against company holidays
+  useEffect(() => {
+    if (COMPANY_HOLIDAYS_2026[selectedDate]) {
+      setSelectedHolidayInfo(COMPANY_HOLIDAYS_2026[selectedDate]);
+    } else {
+      setSelectedHolidayInfo(null);
+    }
+  }, [selectedDate]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -88,23 +93,6 @@ function App() {
       
       setTimeStr(new Intl.DateTimeFormat('en-US', optionsTime).format(now));
       setDateStr(new Intl.DateTimeFormat('en-US', optionsDate).format(now));
-
-      const monthKey = now.getMonth() + 1;
-      const dayKey = now.getDate();
-      const lookup = `${monthKey}-${dayKey}`;
-
-      let resolvedDay = '';
-      if (HOLIDAYS.wb[lookup]) {
-        resolvedDay = `${HOLIDAYS.wb[lookup]} (WB)`;
-      } else if (HOLIDAYS.national[lookup]) {
-        resolvedDay = `${HOLIDAYS.national[lookup]} (India)`;
-      } else if (HOLIDAYS.international[lookup]) {
-        resolvedDay = `${HOLIDAYS.international[lookup]} (Intl)`;
-      } else {
-        resolvedDay = 'Regular Operations Day 🏭';
-      }
-
-      setSpecialDayNote(resolvedDay);
     }, 1000);
 
     const slideTimer = setInterval(() => {
@@ -247,13 +235,28 @@ function App() {
           <h4>Leadership</h4>
         </div>
 
+        {/* IST Clock & Interactive Company Holiday Calendar Picker */}
         <div className="sidebar-card widget-box">
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
-          <div style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center' }}>{dateStr}</div>
-          {specialDayNote && (
-            <div className="special-day-banner">
-              ⭐ {specialDayNote}
+          <div style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center', marginBottom: '8px' }}>{dateStr}</div>
+          
+          <label style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 'bold', display: 'block' }}>Pick Date to Check Holiday:</label>
+          <input 
+            type="date" 
+            value={selectedDate} 
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="calendar-input"
+          />
+
+          {selectedHolidayInfo ? (
+            <div className="holiday-result-box">
+              <strong>🎉 {selectedHolidayInfo.occasion}</strong><br/>
+              Status: <span style={{ color: '#fef08a', fontWeight: 'bold' }}>{selectedHolidayInfo.status}</span>
+            </div>
+          ) : (
+            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', textAlign: 'center' }}>
+              🏭 Regular Working Day
             </div>
           )}
         </div>
@@ -551,7 +554,7 @@ function App() {
           </section>
         )}
 
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Completely clean image frame with zero text lines) */}
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
         <div className="bottom-slideshow-section">
           <div className="bottom-slideshow-container">
             {COMPANY_SLIDES.length > 0 ? (

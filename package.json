@@ -2,7 +2,7 @@
   "name": "ambica-hind-app",
   "private": true,
   "version": "1.0.0",
-  "homepage": "https://mis160.github.io/Ambica-Hind-App",
+  "homepage": "https://mis160.github.io/Ambica-Hind/",
   "type": "module",
   "scripts": {
     "dev": "vite",

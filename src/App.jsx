@@ -7,7 +7,7 @@ const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
   url: mod.default
 }));
 
-// Official Company 2026 Holiday Master List (from company records)
+// Official Company 2026 Holiday Master List
 const COMPANY_HOLIDAYS_2026 = {
   '2026-01-23': { occasion: "Saraswati Puja / Netaji's Birthday", status: 'Fully Closed' },
   '2026-01-26': { occasion: 'Republic Day (National)', status: 'Fully Closed' },
@@ -45,7 +45,6 @@ function App() {
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
   
-  // Interactive Calendar Date Picker State (default to today's date YYYY-MM-DD)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedHolidayInfo, setSelectedHolidayInfo] = useState(null);
 
@@ -72,11 +71,16 @@ function App() {
     { id: 1, date: '2026-10-08', plant: 'Zinc Oxide P5F1', mainMeterMW: 145.2, fuelOilLtr: 450, drossQty: 1200, recoveryPct: '88.5%' }
   ]);
 
-  const [joiningMaster] = useState([
+  const [joiningMaster, setJoiningMaster] = useState([
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
   ]);
+  const [newCandidateId, setNewCandidateId] = useState('');
+  const [newCandidateName, setNewCandidateName] = useState('');
+  const [newDept, setNewDept] = useState('Production');
+  const [newDesignation, setNewDesignation] = useState('');
+  const [newJoiningDate, setNewJoiningDate] = useState('');
+  const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
 
-  // Check selected date against company holidays
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
       setSelectedHolidayInfo(COMPANY_HOLIDAYS_2026[selectedDate]);
@@ -168,6 +172,25 @@ function App() {
     setRate('');
   };
 
+  const handleAddCandidate = (e) => {
+    e.preventDefault();
+    if (!newCandidateId || !newCandidateName || !newDesignation || !newJoiningDate) return;
+    const newEntry = {
+      id: joiningMaster.length + 1,
+      candidateId: newCandidateId,
+      name: newCandidateName,
+      dept: newDept,
+      designation: newDesignation,
+      joiningDate: newJoiningDate,
+      status: newStatus
+    };
+    setJoiningMaster([newEntry, ...joiningMaster]);
+    setNewCandidateId('');
+    setNewCandidateName('');
+    setNewDesignation('');
+    setNewJoiningDate('');
+  };
+
   const handleCalcBtn = (val) => {
     if (val === 'C') {
       setCalcInput('0');
@@ -235,7 +258,6 @@ function App() {
           <h4>Leadership</h4>
         </div>
 
-        {/* IST Clock & Interactive Company Holiday Calendar Picker */}
         <div className="sidebar-card widget-box">
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
@@ -490,34 +512,80 @@ function App() {
         )}
 
         {activeModule === 'hr' && (userRole === 'Admin' || userRole === 'HR') && (
-          <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>HR Employee Joining & Onboarding Master</h3>
-            <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Track candidate submissions, document verification registers, and onboarding kits.</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                  <th style={{ padding: '10px' }}>ID</th>
-                  <th style={{ padding: '10px' }}>Name</th>
-                  <th style={{ padding: '10px' }}>Dept</th>
-                  <th style={{ padding: '10px' }}>Designation</th>
-                  <th style={{ padding: '10px' }}>Joining Date</th>
-                  <th style={{ padding: '10px' }}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {joiningMaster.map(emp => (
-                  <tr key={emp.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                    <td style={{ padding: '10px', fontWeight: 'bold' }}>{emp.candidateId}</td>
-                    <td style={{ padding: '10px' }}>{emp.name}</td>
-                    <td style={{ padding: '10px' }}>{emp.dept}</td>
-                    <td style={{ padding: '10px' }}>{emp.designation}</td>
-                    <td style={{ padding: '10px' }}>{emp.joiningDate}</td>
-                    <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{emp.status}</td>
+          <div>
+            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>HR Candidate Onboarding & Joining Entry</h3>
+              <form onSubmit={handleAddCandidate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Candidate ID</label>
+                  <input type="text" value={newCandidateId} onChange={(e) => setNewCandidateId(e.target.value)} placeholder="e.g. EMP-2026-02" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Candidate Name</label>
+                  <input type="text" value={newCandidateName} onChange={(e) => setNewCandidateName(e.target.value)} placeholder="e.g. Priya Sen" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Department</label>
+                  <select value={newDept} onChange={(e) => setNewDept(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                    <option value="Production">Production</option>
+                    <option value="Accounts">Accounts</option>
+                    <option value="HR">HR</option>
+                    <option value="Quality Control">Quality Control</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Designation</label>
+                  <input type="text" value={newDesignation} onChange={(e) => setNewDesignation(e.target.value)} placeholder="e.g. Shift In-charge" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Joining Date</label>
+                  <input type="date" value={newJoiningDate} onChange={(e) => setNewJoiningDate(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Onboarding Status</label>
+                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                    <option value="Verification Pending">Verification Pending</option>
+                    <option value="Verified & Kit Dispatched">Verified & Kit Dispatched</option>
+                    <option value="Onboarding Completed">Onboarding Completed</option>
+                  </select>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
+                    Register New Employee Joining
+                  </button>
+                </div>
+              </form>
+            </section>
+
+            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>HR Employee Joining & Onboarding Master</h3>
+              <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Track candidate submissions, document verification registers, and onboarding kits.</p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                    <th style={{ padding: '10px' }}>ID</th>
+                    <th style={{ padding: '10px' }}>Name</th>
+                    <th style={{ padding: '10px' }}>Dept</th>
+                    <th style={{ padding: '10px' }}>Designation</th>
+                    <th style={{ padding: '10px' }}>Joining Date</th>
+                    <th style={{ padding: '10px' }}>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+                </thead>
+                <tbody>
+                  {joiningMaster.map(emp => (
+                    <tr key={emp.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{emp.candidateId}</td>
+                      <td style={{ padding: '10px' }}>{emp.name}</td>
+                      <td style={{ padding: '10px' }}>{emp.dept}</td>
+                      <td style={{ padding: '10px' }}>{emp.designation}</td>
+                      <td style={{ padding: '10px' }}>{emp.joiningDate}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{emp.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </div>
         )}
 
         {activeModule === 'showcase' && (

@@ -2,14 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 
-// Automatically load all Plant photos & certificates from src/assets/ without manual imports
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
-const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod, index) => ({
-  url: mod.default,
-  caption: index < 12 ? `Ambica-Hind Plant View ${index + 1}` : `Ambica-Hind Certificate & Showcase ${index + 1}`
+const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
+  url: mod.default
 }));
 
-// Holiday Hierarchy: 1. West Bengal, 2. National India, 3. International
 const HOLIDAYS = {
   wb: {
     '4-14': 'Poila Boishakh (Bengali New Year) 🌸',
@@ -554,17 +551,13 @@ function App() {
           </section>
         )}
 
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
+        {/* BOTTOM COMPANY PHOTO SLIDESHOW (Text captions removed) */}
         <div className="bottom-slideshow-section">
-          <h4>Ambica-Hind Plant & Operations Gallery ({COMPANY_SLIDES.length} Photos Loaded)</h4>
           <div className="bottom-slideshow-container">
             {COMPANY_SLIDES.length > 0 ? (
-              <>
-                <img src={COMPANY_SLIDES[currentSlide]?.url} alt="Company Slide" />
-                <p>{COMPANY_SLIDES[currentSlide]?.caption} (Photo {currentSlide + 1} of {COMPANY_SLIDES.length})</p>
-              </>
+              <img src={COMPANY_SLIDES[currentSlide]?.url} alt="Company Slide" />
             ) : (
-              <p>Loading gallery images...</p>
+              <p style={{ color: '#fff' }}>Loading gallery images...</p>
             )}
           </div>
         </div>

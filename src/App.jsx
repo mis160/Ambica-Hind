@@ -64,8 +64,12 @@ function App() {
   const [rate, setRate] = useState('');
   const [location, setLocation] = useState('Kolkata');
 
-  // Live Sheet Data State
-  const [liveCostingLogs, setLiveCostingLogs] = useState([]);
+  // Live Sheet Data States
+  const [liveCrucibles, setLiveCrucibles] = useState([]);
+  const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
+  const [liveProdDash, setLiveProdDash] = useState([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const [joiningMaster, setJoiningMaster] = useState([
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
@@ -77,32 +81,47 @@ function App() {
   const [newJoiningDate, setNewJoiningDate] = useState('');
   const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
 
-  // Fetch live combined master costing data from Google Sheet API on load
+  // Fetch all live ZNO spreadsheet datasets from Google Sheet API on load
   useEffect(() => {
-    async function fetchLiveCosting() {
+    async function fetchLiveSpreadsheetData() {
       try {
         const response = await fetch(PRODUCTION_API_URL);
+        if (!response.ok) throw new Error('Server responded with status ' + response.status);
         const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const formattedRows = data.map((row, index) => ({
-            id: index + 1,
-            date: row.date,
-            plant: 'Zinc Oxide Combined Master',
-            dross: row.dross ? Number(row.dross).toLocaleString() : '0',
-            oxide: row.oxide ? Number(row.oxide).toLocaleString() : '0',
-            totalCost: row.totalCost ? `₹${Number(row.totalCost).toLocaleString()}` : '₹0',
-            costPerKg: row.costPerKg ? `₹${Number(row.costPerKg).toFixed(2)}` : '₹0'
-          }));
-          setLiveCostingLogs(formattedRows);
+
+        if (data && data.error) {
+          throw new Error(data.error);
         }
+
+        if (data) {
+          if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
+          if (Array.isArray(data.monthlyCosting)) {
+            // hide future months that have no production / cost yet
+            setLiveMonthlyCosting(
+              data.monthlyCosting.filter(r => (r.oxide || 0) > 0 || (r.totalCost || 0) > 0)
+            );
+          }
+          if (Array.isArray(data.productionDashboard)) setLiveProdDash(data.productionDashboard);
+        }
+        setLoadError('');
       } catch (err) {
-        console.error("Error loading live costing data from Google Sheet API:", err);
+        console.error("Error loading live data from Google Sheet API:", err);
+        setLoadError('Could not load live data from the Google Sheet (' + (err && err.message ? err.message : err) + '). Please refresh or try again later.');
+      } finally {
+        setDataLoaded(true);
       }
     }
 
-    fetchLiveCosting();
+    fetchLiveSpreadsheetData();
   }, []);
+
+  // Text shown inside a table when it has no rows yet
+  const emptyMessage = (label) => {
+    if (loadError) return loadError;
+    if (dataLoaded) return 'No ' + label + ' found.';
+    return 'Loading ' + label + '...';
+  };
+  const emptyColor = loadError ? '#dc2626' : '#64748b';
 
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
@@ -353,7 +372,6 @@ function App() {
                   </select>
                 </div>
 
-                {/* Sub-dropdown appears when ZNO is selected */}
                 {prodUnit === 'Zinc Oxide (ZNO)' && (
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>ZNO Workbook Module View</label>
@@ -367,47 +385,38 @@ function App() {
               </div>
             </section>
 
-            {/* Render views based on ZNO Sub-Dropdown selection */}
+            {/* Render live Google Sheet data views */}
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'crucible' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🔥 Crucible Life & History Tracker</h3>
-                <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Tracking crucible lifecycle status, days in service, recovery rates, and historic statements.</p>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🔥 Crucible Life & History Tracker (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
                       <th style={{ padding: '10px' }}>Unit</th>
                       <th style={{ padding: '10px' }}>Status</th>
                       <th style={{ padding: '10px' }}>Active Crucible ID</th>
+                      <th style={{ padding: '10px' }}>Running Since</th>
                       <th style={{ padding: '10px' }}>Days in Service</th>
                       <th style={{ padding: '10px' }}>Oxide to Date (KG)</th>
                       <th style={{ padding: '10px' }}>Recovery %</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>P5F1</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>▶ RUNNING</td>
-                      <td style={{ padding: '10px' }}>P5F1-11</td>
-                      <td style={{ padding: '10px' }}>73 Days</td>
-                      <td style={{ padding: '10px' }}>165,325 KG</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>112.3%</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>P5F2</td>
-                      <td style={{ padding: '10px', color: '#dc2626', fontWeight: 'bold' }}>⏹ STOPPED</td>
-                      <td style={{ padding: '10px' }}>—</td>
-                      <td style={{ padding: '10px' }}>—</td>
-                      <td style={{ padding: '10px' }}>—</td>
-                      <td style={{ padding: '10px' }}>—</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>P5F3</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>▶ RUNNING</td>
-                      <td style={{ padding: '10px' }}>P5F3-11</td>
-                      <td style={{ padding: '10px' }}>49 Days</td>
-                      <td style={{ padding: '10px' }}>143,475 KG</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>112.6%</td>
-                    </tr>
+                    {liveCrucibles.length > 0 ? (
+                      liveCrucibles.map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.unit}</td>
+                          <td style={{ padding: '10px', color: (row.status || '').includes('RUNNING') ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>{row.status || '—'}</td>
+                          <td style={{ padding: '10px' }}>{row.crucibleId || '—'}</td>
+                          <td style={{ padding: '10px' }}>{row.runningSince || '—'}</td>
+                          <td style={{ padding: '10px' }}>{row.daysInService || '—'}</td>
+                          <td style={{ padding: '10px' }}>{row.oxideToDate ? Number(row.oxideToDate).toLocaleString() : '—'}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.recovery ? (Number(row.recovery) * 100).toFixed(1) + '%' : '—'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('crucible records')}</td></tr>
+                    )}
                   </tbody>
                 </table>
               </section>
@@ -415,8 +424,7 @@ function App() {
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'monthlyCosting' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📊 P5 & P7 All Costing Month Wise</h3>
-                <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Combined monthly financial summary, dross, oxide, electricity costs, and net cost per KG.</p>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📊 P5 & P7 All Costing Month Wise (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
@@ -428,27 +436,19 @@ function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Aug-2026</td>
-                      <td style={{ padding: '10px' }}>263,020</td>
-                      <td style={{ padding: '10px' }}>294,800</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹5,433,865.52</td>
-                      <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹18.48</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Sep-2026</td>
-                      <td style={{ padding: '10px' }}>170,639</td>
-                      <td style={{ padding: '10px' }}>192,025</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹3,655,557.06</td>
-                      <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹19.05</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Oct-2026</td>
-                      <td style={{ padding: '10px' }}>59,052</td>
-                      <td style={{ padding: '10px' }}>66,325</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹1,229,371.01</td>
-                      <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹18.49</td>
-                    </tr>
+                    {liveMonthlyCosting.length > 0 ? (
+                      liveMonthlyCosting.map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.month}</td>
+                          <td style={{ padding: '10px' }}>{row.dross ? Number(row.dross).toLocaleString() : '0'}</td>
+                          <td style={{ padding: '10px' }}>{row.oxide ? Number(row.oxide).toLocaleString() : '0'}</td>
+                          <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹{row.totalCost ? Number(row.totalCost).toLocaleString() : '0'}</td>
+                          <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹{row.oxide > 0 && row.totalCost ? (Number(row.totalCost) / Number(row.oxide)).toFixed(2) : '0'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('monthly costing records')}</td></tr>
+                    )}
                   </tbody>
                 </table>
               </section>
@@ -456,32 +456,29 @@ function App() {
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'productionDash' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📈 Executive Production Dashboard</h3>
-                <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Live KPI scorecards and monthly performance breakdown.</p>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📈 Executive Production Dashboard (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Metric</th>
-                      <th style={{ padding: '10px' }}>Selected Month Value</th>
+                      <th style={{ padding: '10px' }}>Month</th>
+                      <th style={{ padding: '10px' }}>Oxide Produced (KG)</th>
+                      <th style={{ padding: '10px' }}>Total Cost (₹)</th>
+                      <th style={{ padding: '10px' }}>Net Cost / KG (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Zinc Dross Used</td>
-                      <td style={{ padding: '10px' }}>59,052 KG</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Electricity Meter Cost</td>
-                      <td style={{ padding: '10px' }}>₹54,864</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Furnace Oil Cost</td>
-                      <td style={{ padding: '10px' }}>₹768,266.39</td>
-                    </tr>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>Average Cost / KG</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹18.54</td>
-                    </tr>
+                    {liveProdDash.length > 0 ? (
+                      liveProdDash.map((row, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.month}</td>
+                          <td style={{ padding: '10px' }}>{row.oxideProduced ? Number(row.oxideProduced).toLocaleString() : '0'}</td>
+                          <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹{row.totalCost ? Number(row.totalCost).toLocaleString() : '0'}</td>
+                          <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹{row.netCostPerKg ? Number(row.netCostPerKg).toFixed(2) : '0'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('production dashboard data')}</td></tr>
+                    )}
                   </tbody>
                 </table>
               </section>

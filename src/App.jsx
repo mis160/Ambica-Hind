@@ -39,7 +39,7 @@ function App() {
   const [userRole, setUserRole] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userAvatar, setUserAvatar] = useState('');
-  const [activeModule, setActiveModule] = useState('costing');
+  const [activeModule, setActiveModule] = useState('production');
   const [error, setError] = useState('');
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -51,13 +51,7 @@ function App() {
 
   const [calcInput, setCalcInput] = useState('0');
 
-  const [productionLogs] = useState([
-    { id: 1, date: '2026-10-08', unit: 'Wire Plant (WD)', subDetail: 'Block 1', shift: 'Morning', prodId: 'PRD-001', loggedBy: 'Production Team' }
-  ]);
-  const [prodUnit, setProdUnit] = useState('Wire Plant (WD)');
-  const [subDetail, setSubDetail] = useState('');
-  const [shift, setShift] = useState('Morning');
-  const [prodId, setProdId] = useState('');
+  const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
 
   const [salesLogs, setSalesLogs] = useState([
     { id: 1, date: '2026-10-08', customer: 'AMBICA CHEMICALS', material: 'AMBA', qtyMT: 15, rate: 215, location: 'Kolkata', totalVal: 322500 }
@@ -68,7 +62,7 @@ function App() {
   const [rate, setRate] = useState('');
   const [location, setLocation] = useState('Kolkata');
 
-  // Live Sheet Data State for Costing & Calculations
+  // Live Sheet Data State
   const [liveCostingLogs, setLiveCostingLogs] = useState([]);
 
   const [joiningMaster, setJoiningMaster] = useState([
@@ -154,29 +148,12 @@ function App() {
       if (matchedUser.role === 'HR') setActiveModule('hr');
       else if (matchedUser.role === 'Production') setActiveModule('production');
       else if (matchedUser.role === 'Accounts') setActiveModule('sales');
-      else setActiveModule('costing');
+      else setActiveModule('production');
       
       setError('');
     } else {
       setError('Unauthorized email or incorrect password. Please check your credentials.');
     }
-  };
-
-  const handleAddProduction = (e) => {
-    e.preventDefault();
-    if (!subDetail || !prodId) return;
-    const newEntry = {
-      id: productionLogs.length + 1,
-      date: new Date().toISOString().split('T')[0],
-      unit: prodUnit,
-      subDetail: subDetail,
-      shift: shift,
-      prodId: prodId,
-      loggedBy: userRole
-    };
-    setProductionLogs([newEntry, ...productionLogs]);
-    setSubDetail('');
-    setProdId('');
   };
 
   const handleAddSale = (e) => {
@@ -367,64 +344,49 @@ function App() {
         {activeModule === 'production' && (userRole === 'Admin' || userRole === 'Production') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>New Production Entry</h3>
-              <form onSubmit={handleAddProduction} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Plant Production & Despatch Filter</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Manufacturing Unit</label>
                   <select value={prodUnit} onChange={(e) => setProdUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Wire Plant (WD)">Wire Plant (WD)</option>
                     <option value="Zinc Oxide (ZNO)">Zinc Oxide (ZNO)</option>
+                    <option value="Wire Plant (WD)">Wire Plant (WD)</option>
                     <option value="Galvanizing (GI)">Galvanizing (GI)</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sub-Detail / Block</label>
-                  <input type="text" value={subDetail} onChange={(e) => setSubDetail(e.target.value)} placeholder="e.g. Block 2" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Shift</label>
-                  <select value={shift} onChange={(e) => setShift(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Morning">Morning</option>
-                    <option value="Evening">Evening</option>
-                    <option value="Night">Night</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Production ID / Batch</label>
-                  <input type="text" value={prodId} onChange={(e) => setProdId(e.target.value)} placeholder="e.g. PRD-102" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                    Add Production Log
-                  </button>
-                </div>
-              </form>
+              </div>
             </section>
 
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs for {prodUnit} (Synced from Google Sheet)</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
                     <th style={{ padding: '10px' }}>Date</th>
                     <th style={{ padding: '10px' }}>Unit</th>
-                    <th style={{ padding: '10px' }}>Block</th>
-                    <th style={{ padding: '10px' }}>Shift</th>
-                    <th style={{ padding: '10px' }}>Prod ID</th>
-                    <th style={{ padding: '10px' }}>Logged By</th>
+                    <th style={{ padding: '10px' }}>Dross (KG)</th>
+                    <th style={{ padding: '10px' }}>Oxide (KG)</th>
+                    <th style={{ padding: '10px' }}>Total Cost (₹)</th>
+                    <th style={{ padding: '10px' }}>Cost / KG</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {productionLogs.map(log => (
-                    <tr key={log.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px' }}>{log.date}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{log.unit}</td>
-                      <td style={{ padding: '10px' }}>{log.subDetail}</td>
-                      <td style={{ padding: '10px' }}>{log.shift}</td>
-                      <td style={{ padding: '10px' }}>{log.prodId}</td>
-                      <td style={{ padding: '10px' }}>{log.loggedBy}</td>
+                  {liveCostingLogs.length > 0 ? (
+                    liveCostingLogs.map(log => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                        <td style={{ padding: '10px' }}>{log.date}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{prodUnit}</td>
+                        <td style={{ padding: '10px' }}>{log.dross}</td>
+                        <td style={{ padding: '10px' }}>{log.oxide}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>{log.totalCost}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{log.costPerKg}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>Loading live records from spreadsheet...</td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
             </section>

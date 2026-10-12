@@ -142,18 +142,33 @@ body {
   letter-spacing: 0.5px;
 }
 
+.bottom-slideshow-container {
+  background: #000;
+  border-radius: 8px;
+  padding: 10px;
+  border: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+}
+
 .bottom-slideshow-container img {
-  width: 100%;
-  max-height: 220px;
-  object-fit: cover;
+  max-width: 100%;
+  max-height: 400px;
+  width: auto;
+  height: auto;
+  object-fit: contain; /* Displays original pictures and certificates in full without cutting edges or heads */
   border-radius: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  display: block;
 }
 
 .bottom-slideshow-container p {
   color: #cbd5e1;
   font-size: 12px;
-  margin: 0;
+  margin: 5px 0 0 0;
 }
 
 @media (max-width: 1050px) {
@@ -164,44 +179,4 @@ body {
     width: 100%;
     position: static;
   }
-}/* Bottom Slideshow Section */
-.bottom-slideshow-section {
-  margin-top: 25px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 15px;
-  text-align: center;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-
-.bottom-slideshow-section h4 {
-  color: #38bdf8;
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.bottom-slideshow-container {
-  background: #020617;
-  border-radius: 8px;
-  padding: 10px;
-  border: 1px solid #1e293b;
-}
-
-.bottom-slideshow-container img {
-  width: 100%;
-  max-height: 380px;
-  height: 320px;
-  object-fit: contain; /* This prevents cutting off heads, faces, and certificate borders! */
-  border-radius: 6px;
-  margin-bottom: 8px;
-  background: #000; /* Dark background padding for portrait or document photos */
-}
-
-.bottom-slideshow-container p {
-  color: #cbd5e1;
-  font-size: 12px;
-  margin: 0;
 }

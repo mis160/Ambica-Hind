@@ -31,6 +31,8 @@ const AUTHORIZED_USERS = [
   { email: 'accounts.team@ambahind.com', role: 'Accounts', password: 'acc123' }
 ];
 
+const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -80,6 +82,33 @@ function App() {
   const [newDesignation, setNewDesignation] = useState('');
   const [newJoiningDate, setNewJoiningDate] = useState('');
   const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
+
+  // Fetch live production data from Google Sheet API on load
+  useEffect(() => {
+    async function fetchLiveProduction() {
+      try {
+        const response = await fetch(PRODUCTION_API_URL);
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+          const formattedLogs = data.map((row, index) => ({
+            id: index + 1,
+            date: row.date,
+            unit: 'Zinc Oxide Plant',
+            subDetail: `Dross: ${row.dross} kg`,
+            shift: 'General',
+            prodId: `OX-${row.oxide}KG`,
+            loggedBy: 'Google Sheet API'
+          }));
+          setProductionLogs(formattedLogs);
+        }
+      } catch (err) {
+        console.error("Error loading live production data from sheet:", err);
+      }
+    }
+
+    fetchLiveProduction();
+  }, []);
 
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
@@ -375,7 +404,7 @@ function App() {
             </section>
 
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs (Synced from Google Sheets)</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>

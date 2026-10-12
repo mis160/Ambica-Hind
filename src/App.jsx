@@ -7,7 +7,6 @@ const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
   url: mod.default
 }));
 
-// Official Company 2026 Holiday Master List
 const COMPANY_HOLIDAYS_2026 = {
   '2026-01-23': { occasion: "Saraswati Puja / Netaji's Birthday", status: 'Fully Closed' },
   '2026-01-26': { occasion: 'Republic Day (National)', status: 'Fully Closed' },
@@ -40,7 +39,7 @@ function App() {
   const [userRole, setUserRole] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userAvatar, setUserAvatar] = useState('');
-  const [activeModule, setActiveModule] = useState('production');
+  const [activeModule, setActiveModule] = useState('costing');
   const [error, setError] = useState('');
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -52,7 +51,7 @@ function App() {
 
   const [calcInput, setCalcInput] = useState('0');
 
-  const [productionLogs, setProductionLogs] = useState([
+  const [productionLogs] = useState([
     { id: 1, date: '2026-10-08', unit: 'Wire Plant (WD)', subDetail: 'Block 1', shift: 'Morning', prodId: 'PRD-001', loggedBy: 'Production Team' }
   ]);
   const [prodUnit, setProdUnit] = useState('Wire Plant (WD)');
@@ -69,9 +68,8 @@ function App() {
   const [rate, setRate] = useState('');
   const [location, setLocation] = useState('Kolkata');
 
-  const [costingLogs] = useState([
-    { id: 1, date: '2026-10-08', plant: 'Zinc Oxide P5F1', mainMeterMW: 145.2, fuelOilLtr: 450, drossQty: 1200, recoveryPct: '88.5%' }
-  ]);
+  // Live Sheet Data State for Costing & Calculations
+  const [liveCostingLogs, setLiveCostingLogs] = useState([]);
 
   const [joiningMaster, setJoiningMaster] = useState([
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
@@ -83,31 +81,31 @@ function App() {
   const [newJoiningDate, setNewJoiningDate] = useState('');
   const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
 
-  // Fetch live production data from Google Sheet API on load
+  // Fetch live combined master costing data from Google Sheet API on load
   useEffect(() => {
-    async function fetchLiveProduction() {
+    async function fetchLiveCosting() {
       try {
         const response = await fetch(PRODUCTION_API_URL);
         const data = await response.json();
         
         if (Array.isArray(data) && data.length > 0) {
-          const formattedLogs = data.map((row, index) => ({
+          const formattedRows = data.map((row, index) => ({
             id: index + 1,
             date: row.date,
-            unit: 'Zinc Oxide Plant',
-            subDetail: `Dross: ${row.dross} kg`,
-            shift: 'General',
-            prodId: `OX-${row.oxide}KG`,
-            loggedBy: 'Google Sheet API'
+            plant: 'Zinc Oxide Combined Master',
+            dross: row.dross ? Number(row.dross).toLocaleString() : '0',
+            oxide: row.oxide ? Number(row.oxide).toLocaleString() : '0',
+            totalCost: row.totalCost ? `₹${Number(row.totalCost).toLocaleString()}` : '₹0',
+            costPerKg: row.costPerKg ? `₹${Number(row.costPerKg).toFixed(2)}` : '₹0'
           }));
-          setProductionLogs(formattedLogs);
+          setLiveCostingLogs(formattedRows);
         }
       } catch (err) {
-        console.error("Error loading live production data from sheet:", err);
+        console.error("Error loading live costing data from Google Sheet API:", err);
       }
     }
 
-    fetchLiveProduction();
+    fetchLiveCosting();
   }, []);
 
   useEffect(() => {
@@ -156,7 +154,7 @@ function App() {
       if (matchedUser.role === 'HR') setActiveModule('hr');
       else if (matchedUser.role === 'Production') setActiveModule('production');
       else if (matchedUser.role === 'Accounts') setActiveModule('sales');
-      else setActiveModule('production');
+      else setActiveModule('costing');
       
       setError('');
     } else {
@@ -404,7 +402,7 @@ function App() {
             </section>
 
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs (Synced from Google Sheets)</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '500px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
@@ -511,30 +509,36 @@ function App() {
 
         {activeModule === 'costing' && userRole === 'Admin' && (
           <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>Zinc Oxide & Wire Costing Dashboard</h3>
-            <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Tracking furnace electricity meter logs, fuel oil consumption, and recovery yields.</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '550px' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>Zinc Oxide Combined Master Costing (Live from Google Sheet)</h3>
+            <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Automatically pulling daily production, dross, oxide, total cost, and cost/kg calculations from your spreadsheet.</p>
+            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
               <thead>
                 <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
                   <th style={{ padding: '10px' }}>Date</th>
-                  <th style={{ padding: '10px' }}>Plant</th>
-                  <th style={{ padding: '10px' }}>Meter (MW)</th>
-                  <th style={{ padding: '10px' }}>Fuel Oil</th>
-                  <th style={{ padding: '10px' }}>Dross</th>
-                  <th style={{ padding: '10px' }}>Recovery</th>
+                  <th style={{ padding: '10px' }}>Plant Register</th>
+                  <th style={{ padding: '10px' }}>Dross (KG)</th>
+                  <th style={{ padding: '10px' }}>Oxide (KG)</th>
+                  <th style={{ padding: '10px' }}>Total Cost (₹)</th>
+                  <th style={{ padding: '10px' }}>Cost / KG (₹)</th>
                 </tr>
               </thead>
               <tbody>
-                {costingLogs.map(cost => (
-                  <tr key={cost.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                    <td style={{ padding: '10px' }}>{cost.date}</td>
-                    <td style={{ padding: '10px', fontWeight: 'bold' }}>{cost.plant}</td>
-                    <td style={{ padding: '10px' }}>{cost.mainMeterMW}</td>
-                    <td style={{ padding: '10px' }}>{cost.fuelOilLtr} L</td>
-                    <td style={{ padding: '10px' }}>{cost.drossQty}</td>
-                    <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>{cost.recoveryPct}</td>
+                {liveCostingLogs.length > 0 ? (
+                  liveCostingLogs.map(cost => (
+                    <tr key={cost.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                      <td style={{ padding: '10px' }}>{cost.date}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{cost.plant}</td>
+                      <td style={{ padding: '10px' }}>{cost.dross}</td>
+                      <td style={{ padding: '10px' }}>{cost.oxide}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>{cost.totalCost}</td>
+                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{cost.costPerKg}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>Loading live data from Google Sheets API...</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </section>

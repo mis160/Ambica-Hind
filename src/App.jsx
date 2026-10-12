@@ -330,10 +330,6 @@ function App() {
             <button onClick={() => setActiveModule('sales')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'sales' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'sales' ? 'white' : '#1e293b', border: activeModule === 'sales' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Zinc & PB Sales</button>
           )}
 
-          {userRole === 'Admin' && (
-            <button onClick={() => setActiveModule('costing')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'costing' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'costing' ? 'white' : '#1e293b', border: activeModule === 'costing' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Costing & Elec</button>
-          )}
-
           {(userRole === 'Admin' || userRole === 'HR') && (
             <button onClick={() => setActiveModule('hr')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'hr' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'hr' ? 'white' : '#1e293b', border: activeModule === 'hr' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>HR Master</button>
           )}
@@ -467,43 +463,6 @@ function App() {
               </table>
             </section>
           </div>
-        )}
-
-        {activeModule === 'costing' && userRole === 'Admin' && (
-          <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>Zinc Oxide Combined Master Costing (Live from Google Sheet)</h3>
-            <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Automatically pulling daily production, dross, oxide, total cost, and cost/kg calculations from your spreadsheet.</p>
-            <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                  <th style={{ padding: '10px' }}>Date</th>
-                  <th style={{ padding: '10px' }}>Plant Register</th>
-                  <th style={{ padding: '10px' }}>Dross (KG)</th>
-                  <th style={{ padding: '10px' }}>Oxide (KG)</th>
-                  <th style={{ padding: '10px' }}>Total Cost (₹)</th>
-                  <th style={{ padding: '10px' }}>Cost / KG (₹)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {liveCostingLogs.length > 0 ? (
-                  liveCostingLogs.map(cost => (
-                    <tr key={cost.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px' }}>{cost.date}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{cost.plant}</td>
-                      <td style={{ padding: '10px' }}>{cost.dross}</td>
-                      <td style={{ padding: '10px' }}>{cost.oxide}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>{cost.totalCost}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{cost.costPerKg}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>Loading live data from Google Sheets API...</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </section>
         )}
 
         {activeModule === 'hr' && (userRole === 'Admin' || userRole === 'HR') && (

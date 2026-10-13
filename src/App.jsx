@@ -41,6 +41,17 @@ const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
 
 function App() {
+  // Inject manifest dynamically to support GitHub Pages sub-path PWA installation
+  useEffect(() => {
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = `${import.meta.env.BASE_URL}manifest.json`;
+    document.head.appendChild(manifestLink);
+    return () => {
+      document.head.removeChild(manifestLink);
+    };
+  }, []);
+
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [emailInput, setEmailInput] = useState('');
   const [password, setPassword] = useState('');

@@ -51,23 +51,21 @@ function App() {
 
   const [calcInput, setCalcInput] = useState('0');
 
-  // Two-tier dropdown states for Production & Despatch
+  // Production dropdown states
   const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
   const [znoSubView, setZnoSubView] = useState('crucible');
 
-  const [salesLogs, setSalesLogs] = useState([
-    { id: 1, date: '2026-10-08', customer: 'AMBICA CHEMICALS', material: 'AMBA', qtyMT: 15, rate: 215, location: 'Kolkata', totalVal: 322500 }
-  ]);
-  const [customer, setCustomer] = useState('');
-  const [material, setMaterial] = useState('AMBA');
-  const [qtyMT, setQtyMT] = useState('');
-  const [rate, setRate] = useState('');
-  const [location, setLocation] = useState('Kolkata');
+  // Sales Sub-view state ('panIndia', 'raipurZn', or 'raipurPb')
+  const [salesSubView, setSalesSubView] = useState('panIndia');
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
   const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
   const [liveProdDash, setLiveProdDash] = useState([]);
+  const [livePanIndiaSales, setLivePanIndiaSales] = useState([]);
+  const [liveRaipurZnSales, setLiveRaipurZnSales] = useState([]);
+  const [liveRaipurPbSales, setLiveRaipurPbSales] = useState([]);
+
   const [dataLoaded, setDataLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
 
@@ -81,7 +79,7 @@ function App() {
   const [newJoiningDate, setNewJoiningDate] = useState('');
   const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
 
-  // Fetch all live ZNO spreadsheet datasets from Google Sheet API on load
+  // Fetch all live spreadsheet datasets from Google Sheet API on load
   useEffect(() => {
     async function fetchLiveSpreadsheetData() {
       try {
@@ -89,24 +87,24 @@ function App() {
         if (!response.ok) throw new Error('Server responded with status ' + response.status);
         const data = await response.json();
 
-        if (data && data.error) {
-          throw new Error(data.error);
-        }
+        if (data && data.error) throw new Error(data.error);
 
         if (data) {
           if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
           if (Array.isArray(data.monthlyCosting)) {
-            // hide future months that have no production / cost yet
             setLiveMonthlyCosting(
               data.monthlyCosting.filter(r => (r.oxide || 0) > 0 || (r.totalCost || 0) > 0)
             );
           }
           if (Array.isArray(data.productionDashboard)) setLiveProdDash(data.productionDashboard);
+          if (Array.isArray(data.panIndiaSales)) setLivePanIndiaSales(data.panIndiaSales);
+          if (Array.isArray(data.raipurZnSales)) setLiveRaipurZnSales(data.raipurZnSales);
+          if (Array.isArray(data.raipurPbSales)) setLiveRaipurPbSales(data.raipurPbSales);
         }
         setLoadError('');
       } catch (err) {
         console.error("Error loading live data from Google Sheet API:", err);
-        setLoadError('Could not load live data from the Google Sheet (' + (err && err.message ? err.message : err) + '). Please refresh or try again later.');
+        setLoadError('Could not load live data from the Google Sheet (' + (err && err.message ? err.message : err) + ').');
       } finally {
         setDataLoaded(true);
       }
@@ -115,7 +113,6 @@ function App() {
     fetchLiveSpreadsheetData();
   }, []);
 
-  // Text shown inside a table when it has no rows yet
   const emptyMessage = (label) => {
     if (loadError) return loadError;
     if (dataLoaded) return 'No ' + label + ' found.';
@@ -175,26 +172,6 @@ function App() {
     } else {
       setError('Unauthorized email or incorrect password. Please check your credentials.');
     }
-  };
-
-  const handleAddSale = (e) => {
-    e.preventDefault();
-    if (!customer || !qtyMT || !rate) return;
-    const calculatedValue = Number(qtyMT) * 1000 * Number(rate);
-    const newSale = {
-      id: salesLogs.length + 1,
-      date: new Date().toISOString().split('T')[0],
-      customer: customer,
-      material: material,
-      qtyMT: Number(qtyMT),
-      rate: Number(rate),
-      location: location,
-      totalVal: calculatedValue
-    };
-    setSalesLogs([newSale, ...salesLogs]);
-    setCustomer('');
-    setQtyMT('');
-    setRate('');
   };
 
   const handleAddCandidate = (e) => {
@@ -385,7 +362,6 @@ function App() {
               </div>
             </section>
 
-            {/* Render live Google Sheet data views */}
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'crucible' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🔥 Crucible Life & History Tracker (Live from Google Sheet)</h3>
@@ -508,79 +484,130 @@ function App() {
           </div>
         )}
 
+        {/* ZINC & PB SALES MODULE (PAN INDIA & RAIPUR ZN / PB) */}
         {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>New Sales Dispatch Entry</h3>
-              <form onSubmit={handleAddSale} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Zinc & PB Sales Selector</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Customer Name</label>
-                  <input type="text" value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="e.g. Ambica Chem" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Material</label>
-                  <select value={material} onChange={(e) => setMaterial(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="AMBA">AMBA</option>
-                    <option value="HSC PW">HSC PW</option>
-                    <option value="HZL PW">HZL PW</option>
-                    <option value="Zinc Ingot">Zinc Ingot</option>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales Region / Department</label>
+                  <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
+                    <option value="panIndia">🌐 PAN India Zinc Sales Tracker</option>
+                    <option value="raipurZn">🏭 Raipur Zone — Zinc (ZN) Sales</option>
+                    <option value="raipurPb">⚖️ Raipur Zone — Lead (PB) Sales</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Quantity (MT)</label>
-                  <input type="number" step="0.01" value={qtyMT} onChange={(e) => setQtyMT(e.target.value)} placeholder="e.g. 10" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Rate (₹/KG)</label>
-                  <input type="number" step="0.01" value={rate} onChange={(e) => setRate(e.target.value)} placeholder="e.g. 215" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Location</label>
-                  <select value={location} onChange={(e) => setLocation(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Kolkata">Kolkata</option>
-                    <option value="Raipur">Raipur</option>
-                    <option value="Chennai">Chennai</option>
-                    <option value="Mumbai">Mumbai</option>
-                    <option value="Hyderabad">Hyderabad</option>
-                  </select>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                    Add Sale Dispatch
-                  </button>
-                </div>
-              </form>
+              </div>
             </section>
 
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Sales Records</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-                <thead>
-                  <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                    <th style={{ padding: '10px' }}>Date</th>
-                    <th style={{ padding: '10px' }}>Customer</th>
-                    <th style={{ padding: '10px' }}>Material</th>
-                    <th style={{ padding: '10px' }}>Qty (MT)</th>
-                    <th style={{ padding: '10px' }}>Rate</th>
-                    <th style={{ padding: '10px' }}>Total (₹)</th>
-                    <th style={{ padding: '10px' }}>Location</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {salesLogs.map(sale => (
-                    <tr key={sale.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px' }}>{sale.date}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{sale.customer}</td>
-                      <td style={{ padding: '10px' }}>{sale.material}</td>
-                      <td style={{ padding: '10px' }}>{sale.qtyMT} MT</td>
-                      <td style={{ padding: '10px' }}>₹{sale.rate}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{sale.totalVal.toLocaleString()}</td>
-                      <td style={{ padding: '10px' }}>{sale.location}</td>
+            {salesSubView === 'panIndia' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Live from Google Sheet)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                      <th style={{ padding: '10px' }}>Date</th>
+                      <th style={{ padding: '10px' }}>Customer Name</th>
+                      <th style={{ padding: '10px' }}>Business Category</th>
+                      <th style={{ padding: '10px' }}>Material</th>
+                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
+                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
+                      <th style={{ padding: '10px' }}>Billing Unit</th>
+                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
+                      <th style={{ padding: '10px' }}>Location</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+                  </thead>
+                  <tbody>
+                    {livePanIndiaSales.length > 0 ? (
+                      livePanIndiaSales.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px' }}>{item.date}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
+                          <td style={{ padding: '10px' }}>{item.category}</td>
+                          <td style={{ padding: '10px' }}>{item.material}</td>
+                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
+                          <td style={{ padding: '10px' }}>{item.billingUnit}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.location}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('PAN India sales records')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )}
+
+            {salesSubView === 'raipurZn' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Live from Google Sheet)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                      <th style={{ padding: '10px' }}>Date</th>
+                      <th style={{ padding: '10px' }}>Customer Name</th>
+                      <th style={{ padding: '10px' }}>Product</th>
+                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
+                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
+                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liveRaipurZnSales.length > 0 ? (
+                      liveRaipurZnSales.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px' }}>{item.date}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
+                          <td style={{ padding: '10px' }}>{item.product}</td>
+                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('Raipur Zinc sales records')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )}
+
+            {salesSubView === 'raipurPb' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Live from Google Sheet)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                      <th style={{ padding: '10px' }}>Date</th>
+                      <th style={{ padding: '10px' }}>Customer Name</th>
+                      <th style={{ padding: '10px' }}>Product</th>
+                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
+                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
+                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {liveRaipurPbSales.length > 0 ? (
+                      liveRaipurPbSales.map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px' }}>{item.date}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
+                          <td style={{ padding: '10px' }}>{item.product}</td>
+                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('Raipur Lead (PB) sales records')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )}
           </div>
         )}
 

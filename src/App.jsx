@@ -57,8 +57,8 @@ function App() {
   const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
   const [znoSubView, setZnoSubView] = useState('crucible');
 
-  // Sales Sub-view state ('dashboard', 'panIndia', 'raipurZn', or 'raipurPb')
-  const [salesSubView, setSalesSubView] = useState('dashboard');
+  // Sales Sub-view state ('panIndiaDash', 'panIndiaLogs', 'raipurZnDash', 'raipurZnLogs', 'raipurPbDash', 'raipurPbLogs')
+  const [salesSubView, setSalesSubView] = useState('panIndiaDash');
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
@@ -168,6 +168,29 @@ function App() {
     return 'Loading ' + label + '...';
   };
   const salesEmptyColor = (source) => (salesErrors[source] ? '#dc2626' : '#64748b');
+
+  // Helper aggregation for Top 10 Customers & Zone-wise Breakdown
+  const getTopCustomers = (salesArr, limit = 10) => {
+    const map = {};
+    salesArr.forEach(s => {
+      const name = s.customer || 'Unknown';
+      const q = Number(s.qty) || 0;
+      map[name] = (map[name] || 0) + q;
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit);
+  };
+
+  const getLocationBreakdown = (salesArr) => {
+    const map = {};
+    salesArr.forEach(s => {
+      const loc = s.location || 'Kolkata';
+      const q = Number(s.qty) || 0;
+      map[loc] = (map[loc] || 0) + q;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  };
 
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
@@ -533,54 +556,197 @@ function App() {
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARD & REPORTS) */}
+        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE & LOGS) */}
         {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Zinc & PB Sales Analytics & Region Selectors</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales View / Report Mode</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales Unit / Department Mode</label>
                   <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
-                    <option value="dashboard">📊 Executive Sales Dashboard & KPIs</option>
-                    <option value="panIndia">🌐 PAN India Zinc Sales Tracker</option>
-                    <option value="raipurZn">🏭 Raipur Zone — Zinc (ZN) Sales</option>
-                    <option value="raipurPb">⚖️ Raipur Zone — Lead (PB) Sales</option>
+                    <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
+                    <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records</option>
+                    <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
+                    <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records</option>
+                    <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
+                    <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records</option>
                   </select>
                 </div>
               </div>
             </section>
 
-            {salesSubView === 'dashboard' && (
+            {/* 1. PAN INDIA DASHBOARD & TOP 10 & BREAKDOWN */}
+            {salesSubView === 'panIndiaDash' && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card">
-                    <h4>Total Despatches (Entries)</h4>
-                    <div className="metric-val">{livePanIndiaSales.length + liveRaipurZnSales.length + liveRaipurPbSales.length} Records</div>
-                    <div className="metric-sub">Synced across PAN India & Raipur</div>
-                  </div>
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
-                    <h4>PAN India Records</h4>
-                    <div className="metric-val">{livePanIndiaSales.length} Entries</div>
+                    <h4>Total PAN India Entries</h4>
+                    <div className="metric-val">{livePanIndiaSales.length} Records</div>
                     <div className="metric-sub">Kolkata Zone / Direct Dispatch</div>
                   </div>
+                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
+                    <h4>Total Qty Despatched</h4>
+                    <div className="metric-val">{(livePanIndiaSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
+                    <div className="metric-sub">Cumulative tonnage</div>
+                  </div>
                   <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
-                    <h4>Raipur Zone Records</h4>
-                    <div className="metric-val">{liveRaipurZnSales.length + liveRaipurPbSales.length} Entries</div>
-                    <div className="metric-sub">Zinc (ZN) & Lead (PB) Dept</div>
+                    <h4>Total Sales Value</h4>
+                    <div className="metric-val">₹{(livePanIndiaSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
+                    <div className="metric-sub">Total billing value</div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                  {/* Top 10 Customers */}
+                  <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                    <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 PAN India — Top 10 Customers</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
+                      <thead>
+                        <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
+                          <th style={{ padding: '8px' }}>Customer Name</th>
+                          <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getTopCustomers(livePanIndiaSales, 10).length > 0 ? (
+                          getTopCustomers(livePanIndiaSales, 10).map(([cust, q], idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
+                              <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
+                              <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No customer data available.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </section>
+
+                  {/* Zone / Location Breakdown */}
+                  <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                    <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>📍 PAN India — Zone / Location Breakdown</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
+                      <thead>
+                        <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
+                          <th style={{ padding: '8px' }}>Location / Zone</th>
+                          <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getLocationBreakdown(livePanIndiaSales).length > 0 ? (
+                          getLocationBreakdown(livePanIndiaSales).map(([loc, q], idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
+                              <td style={{ padding: '8px', fontWeight: 'bold' }}>{loc}</td>
+                              <td style={{ padding: '8px', textAlign: 'right', color: '#16a34a' }}>{q.toLocaleString()} KGS</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No location data available.</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </section>
+                </div>
+              </div>
+            )}
+
+            {/* 2. RAIPUR ZN DASHBOARD & TOP 10 */}
+            {salesSubView === 'raipurZnDash' && (
+              <div>
+                <div className="sales-metric-grid">
+                  <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
+                    <h4>Raipur ZN Records</h4>
+                    <div className="metric-val">{liveRaipurZnSales.length} Entries</div>
+                    <div className="metric-sub">Zinc Despatch Department</div>
+                  </div>
+                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
+                    <h4>Total ZN Qty Despatched</h4>
+                    <div className="metric-val">{(liveRaipurZnSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
+                    <div className="metric-sub">Cumulative tonnage</div>
+                  </div>
+                  <div className="sales-metric-card">
+                    <h4>Total ZN Sales Value</h4>
+                    <div className="metric-val">₹{(liveRaipurZnSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
+                    <div className="metric-sub">Total billing value</div>
                   </div>
                 </div>
 
                 <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                  <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📌 Executive Sales Overview</h3>
-                  <p style={{ color: '#64748b', fontSize: '13px', margin: 0 }}>
-                    Use the selector dropdown above to switch between the <strong>PAN India Zinc Sales Tracker</strong>, <strong>Raipur Zinc (ZN) Sales</strong>, and <strong>Raipur Lead (PB) Sales</strong> detailed tabular logs.
-                  </p>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 Raipur Zinc (ZN) — Top Customers</h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
+                        <th style={{ padding: '8px' }}>Customer Name</th>
+                        <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getTopCustomers(liveRaipurZnSales, 10).length > 0 ? (
+                        getTopCustomers(liveRaipurZnSales, 10).map(([cust, q], idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
+                            <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No Raipur ZN customer data available.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 </section>
               </div>
             )}
 
-            {salesSubView === 'panIndia' && (
+            {/* 3. RAIPUR PB DASHBOARD & TOP 10 */}
+            {salesSubView === 'raipurPbDash' && (
+              <div>
+                <div className="sales-metric-grid">
+                  <div className="sales-metric-card" style={{ borderLeftColor: '#7c3aed' }}>
+                    <h4>Raipur Lead (PB) Records</h4>
+                    <div className="metric-val">{liveRaipurPbSales.length} Entries</div>
+                    <div className="metric-sub">Lead Despatch Department</div>
+                  </div>
+                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
+                    <h4>Total PB Qty Despatched</h4>
+                    <div className="metric-val">{(liveRaipurPbSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
+                    <div className="metric-sub">Cumulative tonnage</div>
+                  </div>
+                  <div className="sales-metric-card">
+                    <h4>Total PB Sales Value</h4>
+                    <div className="metric-val">₹{(liveRaipurPbSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
+                    <div className="metric-sub">Total billing value</div>
+                  </div>
+                </div>
+
+                <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 Raipur Lead (PB) — Top Customers</h3>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
+                        <th style={{ padding: '8px' }}>Customer Name</th>
+                        <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getTopCustomers(liveRaipurPbSales, 10).length > 0 ? (
+                        getTopCustomers(liveRaipurPbSales, 10).map(([cust, q], idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
+                            <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
+                            <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No Raipur PB customer data available.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </section>
+              </div>
+            )}
+
+            {/* LOG TABLES */}
+            {salesSubView === 'panIndiaLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
@@ -620,7 +786,7 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurZn' && (
+            {salesSubView === 'raipurZnLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
@@ -654,7 +820,7 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurPb' && (
+            {salesSubView === 'raipurPbLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>

@@ -256,7 +256,7 @@ function App() {
 
       if (matchedUser.role === 'HR') initialModule = 'hr';
       else if (matchedUser.role === 'Production') initialModule = 'production';
-      else if (matchedUser.role === 'Accounts') {
+      else if (matchedUser.role === 'Accounts' || matchedUser.email === 'piyali@ambahind.com' || matchedUser.email === 'zincoxide@ambahind.com' || matchedUser.email === 'mkt@ambahind.com') {
         initialModule = 'sales';
         if (matchedUser.email === 'mkt@ambahind.com') {
           initialSalesView = 'raipurZnDash';

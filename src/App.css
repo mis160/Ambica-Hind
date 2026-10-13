@@ -18,9 +18,9 @@ body {
   box-sizing: border-box;
 }
 
-/* Left Sidebar Column (CEO Badge + Tools below it) */
+/* Left Sidebar Column */
 .left-sidebar-column {
-  flex: 0 0 220px;
+  flex: 0 0 240px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -56,7 +56,7 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* Clock & Calendar Widget */
+/* Clock & Interactive Calendar Widget */
 .widget-box {
   font-size: 11px;
   text-align: left;
@@ -70,15 +70,29 @@ body {
   margin-bottom: 3px;
 }
 
-.special-day-banner {
+.calendar-input {
+  width: 100%;
+  background: #020617;
+  color: #38bdf8;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+  font-size: 12px;
+  margin-top: 8px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.holiday-result-box {
   background: #0284c7;
   color: white;
   font-size: 10px;
-  padding: 4px;
-  border-radius: 4px;
-  margin-top: 6px;
-  text-align: center;
-  font-weight: bold;
+  padding: 6px;
+  border-radius: 6px;
+  margin-top: 8px;
+  text-align: left;
+  line-height: 1.4;
 }
 
 /* Quick Calculator */
@@ -123,6 +137,41 @@ body {
   min-width: 0;
 }
 
+/* Sales Metric KPI Cards */
+.sales-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.sales-metric-card {
+  background: #ffffff;
+  padding: 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-left: 5px solid #2563eb;
+}
+
+.sales-metric-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.sales-metric-card .metric-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sales-metric-card .metric-sub {
+  font-size: 11px;
+  color: #16a34a;
+  margin-top: 4px;
+}
+
 /* Bottom Slideshow Section */
 .bottom-slideshow-section {
   margin-top: 25px;
@@ -132,14 +181,6 @@ body {
   padding: 15px;
   text-align: center;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-}
-
-.bottom-slideshow-section h4 {
-  color: #38bdf8;
-  margin: 0 0 10px 0;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .bottom-slideshow-container {
@@ -159,16 +200,9 @@ body {
   max-height: 400px;
   width: auto;
   height: auto;
-  object-fit: contain; /* Displays original pictures and certificates in full without cutting edges or heads */
+  object-fit: contain;
   border-radius: 6px;
-  margin-bottom: 8px;
   display: block;
-}
-
-.bottom-slideshow-container p {
-  color: #cbd5e1;
-  font-size: 12px;
-  margin: 5px 0 0 0;
 }
 
 @media (max-width: 1050px) {

@@ -572,7 +572,7 @@ function App() {
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE, LOGS & EMBEDDED FORMS) */}
+        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE, LOGS & EXTERNAL FORM BUTTONS) */}
         {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
@@ -872,26 +872,34 @@ function App() {
               </section>
             )}
 
-            {/* EMBEDDED GOOGLE FORMS */}
+            {/* EXTERNAL GOOGLE FORMS CARDS */}
             {salesSubView === 'panIndiaForm' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>📝 PAN India Despatch Submission Form</h3>
-                <iframe 
-                  src={PAN_INDIA_FORM_URL} 
-                  title="PAN India Form"
-                  style={{ width: '100%', height: '700px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff' }}
-                />
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 PAN India Despatch Submission Form</h3>
+                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
+                <a 
+                  href={PAN_INDIA_FORM_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
+                >
+                  Open PAN India Form in New Tab ↗
+                </a>
               </section>
             )}
 
             {salesSubView === 'raipurForm' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>📝 Raipur Despatch Submission Form</h3>
-                <iframe 
-                  src={RAIPUR_FORM_URL} 
-                  title="Raipur Form"
-                  style={{ width: '100%', height: '700px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff' }}
-                />
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 Raipur Despatch Submission Form</h3>
+                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
+                <a 
+                  href={RAIPUR_FORM_URL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
+                >
+                  Open Raipur Form in New Tab ↗
+                </a>
               </section>
             )}
           </div>

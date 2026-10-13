@@ -34,13 +34,16 @@ const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEH
 const PAN_INDIA_API_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec?action=data";
 const RAIPUR_API_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec?action=data";
 
+const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec";
+const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
+
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [emailInput, setEmailInput] = useState('');
   const [password, setPassword] = useState('');
-  const [userRole, setUserRole] = useState('');
-  const [userEmail, setUserEmail] = useState('');
-  const [userAvatar, setUserAvatar] = useState('');
+  const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || '');
+  const [userEmail, setUserEmail] = useState(() => localStorage.getItem('userEmail') || '');
+  const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('userAvatar') || '');
   const [activeModule, setActiveModule] = useState('production');
   const [error, setError] = useState('');
 
@@ -233,7 +236,13 @@ function App() {
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
-      setUserAvatar(`https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`);
+      const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${matchedUser.email}&backgroundColor=2563eb`;
+      setUserAvatar(avatarUrl);
+
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('userRole', matchedUser.role);
+      localStorage.setItem('userEmail', matchedUser.email);
+      localStorage.setItem('userAvatar', avatarUrl);
       
       if (matchedUser.role === 'HR') setActiveModule('hr');
       else if (matchedUser.role === 'Production') setActiveModule('production');
@@ -244,6 +253,11 @@ function App() {
     } else {
       setError('Unauthorized email or incorrect password. Please check your credentials.');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setIsLoggedIn(false);
   };
 
   const handleAddCandidate = (e) => {
@@ -298,6 +312,7 @@ function App() {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px', color: '#334155' }}>Work Email ID</label>
             <input 
               type="text" 
+              autoComplete="username"
               placeholder="e.g. hr.manager@ambahind.com" 
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)} 
@@ -308,6 +323,7 @@ function App() {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px', color: '#334155' }}>Password</label>
             <input 
               type="password" 
+              autoComplete="current-password"
               placeholder="Enter password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)} 
@@ -387,7 +403,7 @@ function App() {
               <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Department Access</span>
               <strong style={{ color: '#1e293b', fontSize: '14px' }}>{userRole}</strong>
             </div>
-            <button onClick={() => setIsLoggedIn(false)} style={{ padding: '8px 14px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Logout</button>
+            <button onClick={handleLogout} style={{ padding: '8px 14px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>Logout</button>
           </div>
         </header>
 
@@ -556,7 +572,7 @@ function App() {
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE & LOGS) */}
+        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE, LOGS & EMBEDDED FORMS) */}
         {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
@@ -567,10 +583,12 @@ function App() {
                   <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
                     <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
                     <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records (Newest First)</option>
+                    <option value="panIndiaForm">📝 PAN India — Submit Despatch Form</option>
                     <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
                     <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records (Newest First)</option>
                     <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
                     <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records (Newest First)</option>
+                    <option value="raipurForm">📝 Raipur — Submit Despatch Form</option>
                   </select>
                 </div>
               </div>
@@ -851,6 +869,29 @@ function App() {
                     )}
                   </tbody>
                 </table>
+              </section>
+            )}
+
+            {/* EMBEDDED GOOGLE FORMS */}
+            {salesSubView === 'panIndiaForm' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>📝 PAN India Despatch Submission Form</h3>
+                <iframe 
+                  src={PAN_INDIA_FORM_URL} 
+                  title="PAN India Form"
+                  style={{ width: '100%', height: '700px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff' }}
+                />
+              </section>
+            )}
+
+            {salesSubView === 'raipurForm' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>📝 Raipur Despatch Submission Form</h3>
+                <iframe 
+                  src={RAIPUR_FORM_URL} 
+                  title="Raipur Form"
+                  style={{ width: '100%', height: '700px', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#fff' }}
+                />
               </section>
             )}
           </div>

@@ -32,6 +32,13 @@ const AUTHORIZED_USERS = [
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
 
+// Sales data comes from two separate Google Apps Script web apps (each returns JSON at ?action=data)
+// PAN India (Kolkata zone) zinc despatch tracker -> returns { panIndiaSales: [...] }
+const PAN_INDIA_API_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec?action=data";
+// Raipur ZN & PB tracker -> returns { raipurZnSales: [...], raipurPbSales: [...] }
+// Paste the Raipur web-app URL here (it must end with /exec?action=data). Leave "" until it is deployed.
+const RAIPUR_API_URL = "";
+
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [emailInput, setEmailInput] = useState('');
@@ -68,6 +75,8 @@ function App() {
 
   const [dataLoaded, setDataLoaded] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [salesErrors, setSalesErrors] = useState({ panIndia: '', raipur: '' });
+  const [salesLoaded, setSalesLoaded] = useState(false);
 
   const [joiningMaster, setJoiningMaster] = useState([
     { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
@@ -97,9 +106,6 @@ function App() {
             );
           }
           if (Array.isArray(data.productionDashboard)) setLiveProdDash(data.productionDashboard);
-          if (Array.isArray(data.panIndiaSales)) setLivePanIndiaSales(data.panIndiaSales);
-          if (Array.isArray(data.raipurZnSales)) setLiveRaipurZnSales(data.raipurZnSales);
-          if (Array.isArray(data.raipurPbSales)) setLiveRaipurPbSales(data.raipurPbSales);
         }
         setLoadError('');
       } catch (err) {
@@ -113,12 +119,60 @@ function App() {
     fetchLiveSpreadsheetData();
   }, []);
 
+  // Fetch sales data from the PAN India and Raipur web apps (each source fails on its own)
+  useEffect(() => {
+    async function getJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Server responded with status ' + response.status);
+      const data = await response.json();
+      if (data && data.error) throw new Error(data.error);
+      return data || {};
+    }
+    const msg = (err) => (err && err.message ? err.message : String(err));
+
+    async function fetchSalesData() {
+      const errors = { panIndia: '', raipur: '' };
+
+      const panIndiaJob = getJson(PAN_INDIA_API_URL)
+        .then((data) => { if (Array.isArray(data.panIndiaSales)) setLivePanIndiaSales(data.panIndiaSales); })
+        .catch((err) => {
+          console.error('Error loading PAN India sales:', err);
+          errors.panIndia = 'Could not load PAN India sales (' + msg(err) + ').';
+        });
+
+      const raipurJob = RAIPUR_API_URL
+        ? getJson(RAIPUR_API_URL)
+            .then((data) => {
+              if (Array.isArray(data.raipurZnSales)) setLiveRaipurZnSales(data.raipurZnSales);
+              if (Array.isArray(data.raipurPbSales)) setLiveRaipurPbSales(data.raipurPbSales);
+            })
+            .catch((err) => {
+              console.error('Error loading Raipur sales:', err);
+              errors.raipur = 'Could not load Raipur sales (' + msg(err) + ').';
+            })
+        : Promise.resolve().then(() => { errors.raipur = 'Raipur sales data source is not connected yet.'; });
+
+      await Promise.all([panIndiaJob, raipurJob]);
+      setSalesErrors(errors);
+      setSalesLoaded(true);
+    }
+
+    fetchSalesData();
+  }, []);
+
   const emptyMessage = (label) => {
     if (loadError) return loadError;
     if (dataLoaded) return 'No ' + label + ' found.';
     return 'Loading ' + label + '...';
   };
   const emptyColor = loadError ? '#dc2626' : '#64748b';
+
+  const salesEmptyMessage = (label, source) => {
+    if (salesErrors[source]) return salesErrors[source];
+    if (salesLoaded) return 'No ' + label + ' found.';
+    return 'Loading ' + label + '...';
+  };
+  const salesEmptyColor = (source) => (salesErrors[source] ? '#dc2626' : '#64748b');
 
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
@@ -534,7 +588,7 @@ function App() {
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('PAN India sales records')}</td></tr>
+                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('panIndia') }}>{salesEmptyMessage('PAN India sales records', 'panIndia')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -568,7 +622,7 @@ function App() {
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('Raipur Zinc sales records')}</td></tr>
+                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('raipur') }}>{salesEmptyMessage('Raipur Zinc sales records', 'raipur')}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -602,7 +656,7 @@ function App() {
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('Raipur Lead (PB) sales records')}</td></tr>
+                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('raipur') }}>{salesEmptyMessage('Raipur Lead (PB) sales records', 'raipur')}</td></tr>
                     )}
                   </tbody>
                 </table>

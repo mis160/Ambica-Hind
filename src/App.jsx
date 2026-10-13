@@ -57,7 +57,7 @@ function App() {
   const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
   const [znoSubView, setZnoSubView] = useState('crucible');
 
-  // Sales Sub-view state ('panIndiaDash', 'panIndiaLogs', 'raipurZnDash', 'raipurZnLogs', 'raipurPbDash', 'raipurPbLogs')
+  // Sales Sub-view state
   const [salesSubView, setSalesSubView] = useState('panIndiaDash');
 
   // Live Sheet Data States
@@ -566,11 +566,11 @@ function App() {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales Unit / Department Mode</label>
                   <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
                     <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
-                    <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records</option>
+                    <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records (Newest First)</option>
                     <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
-                    <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records</option>
+                    <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records (Newest First)</option>
                     <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
-                    <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records</option>
+                    <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records (Newest First)</option>
                   </select>
                 </div>
               </div>
@@ -745,10 +745,10 @@ function App() {
               </div>
             )}
 
-            {/* LOG TABLES */}
+            {/* LOG TABLES (DESCENDING / NEWEST FIRST) */}
             {salesSubView === 'panIndiaLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Live from Google Sheet)</h3>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
@@ -765,7 +765,7 @@ function App() {
                   </thead>
                   <tbody>
                     {livePanIndiaSales.length > 0 ? (
-                      livePanIndiaSales.map((item, idx) => (
+                      livePanIndiaSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
                           <td style={{ padding: '10px' }}>{item.date}</td>
                           <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
@@ -788,7 +788,7 @@ function App() {
 
             {salesSubView === 'raipurZnLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Live from Google Sheet)</h3>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
@@ -802,7 +802,7 @@ function App() {
                   </thead>
                   <tbody>
                     {liveRaipurZnSales.length > 0 ? (
-                      liveRaipurZnSales.map((item, idx) => (
+                      liveRaipurZnSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
                           <td style={{ padding: '10px' }}>{item.date}</td>
                           <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
@@ -822,7 +822,7 @@ function App() {
 
             {salesSubView === 'raipurPbLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Live from Google Sheet)</h3>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
@@ -836,7 +836,7 @@ function App() {
                   </thead>
                   <tbody>
                     {liveRaipurPbSales.length > 0 ? (
-                      liveRaipurPbSales.map((item, idx) => (
+                      liveRaipurPbSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
                           <td style={{ padding: '10px' }}>{item.date}</td>
                           <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>

@@ -533,7 +533,7 @@ function App() {
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (DASHBOARD, KPI CARDS & REGION TRACKERS) */}
+        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARD & REPORTS) */}
         {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
@@ -571,36 +571,11 @@ function App() {
                   </div>
                 </div>
 
-                <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                  <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>📌 Executive Month Snapshot & Recent Despatches</h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-                    <thead>
-                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                        <th style={{ padding: '10px' }}>Date</th>
-                        <th style={{ padding: '10px' }}>Customer Name</th>
-                        <th style={{ padding: '10px' }}>Material / Product</th>
-                        <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
-                        <th style={{ padding: '10px' }}>Qty (KGS)</th>
-                        <th style={{ padding: '10px' }}>Total Value (₹)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {livePanIndiaSales.length > 0 ? (
-                        livePanIndiaSales.slice(0, 10).map((row, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                            <td style={{ padding: '10px' }}>{row.date}</td>
-                            <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.customer}</td>
-                            <td style={{ padding: '10px' }}>{row.material}</td>
-                            <td style={{ padding: '10px' }}>₹{row.rate}</td>
-                            <td style={{ padding: '10px' }}>{Number(row.qty).toLocaleString()} KGS</td>
-                            <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹{Number(row.value).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: '#64748b' }}>Loading executive summary despatches...</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+                <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                  <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📌 Executive Sales Overview</h3>
+                  <p style={{ color: '#64748b', fontSize: '13px', margin: 0 }}>
+                    Use the selector dropdown above to switch between the <strong>PAN India Zinc Sales Tracker</strong>, <strong>Raipur Zinc (ZN) Sales</strong>, and <strong>Raipur Lead (PB) Sales</strong> detailed tabular logs.
+                  </p>
                 </section>
               </div>
             )}
@@ -687,7 +662,7 @@ function App() {
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
                       <th style={{ padding: '10px' }}>Date</th>
                       <th style={{ padding: '10px' }}>Customer Name</th>
-                      <th style={{ pipadding: '10px' }}>Product</th>
+                      <th style={{ padding: '10px' }}>Product</th>
                       <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
                       <th style={{ padding: '10px' }}>Qty (KGS)</th>
                       <th style={{ padding: '10px' }}>Total Value (₹)</th>

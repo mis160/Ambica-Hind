@@ -31,13 +31,8 @@ const AUTHORIZED_USERS = [
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
-
-// Sales data comes from two separate Google Apps Script web apps (each returns JSON at ?action=data)
-// PAN India (Kolkata zone) zinc despatch tracker -> returns { panIndiaSales: [...] }
 const PAN_INDIA_API_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec?action=data";
-// Raipur ZN & PB tracker -> returns { raipurZnSales: [...], raipurPbSales: [...] }
-// Paste the Raipur web-app URL here (it must end with /exec?action=data). Leave "" until it is deployed.
-const RAIPUR_API_URL = "";
+const RAIPUR_API_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec?action=data";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -119,7 +114,7 @@ function App() {
     fetchLiveSpreadsheetData();
   }, []);
 
-  // Fetch sales data from the PAN India and Raipur web apps (each source fails on its own)
+  // Fetch sales data from the PAN India and Raipur web apps
   useEffect(() => {
     async function getJson(url) {
       const response = await fetch(url);

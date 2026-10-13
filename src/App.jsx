@@ -26,8 +26,11 @@ const AUTHORIZED_USERS = [
   { email: 'dev@ambahind.com', role: 'Admin', password: 'admin123' },
   { email: 'mis@ambahind.com', role: 'Admin', password: 'admin123' },
   { email: 'hr@ambahind.com', role: 'HR', password: 'hr123' },
-  { email: 'sauravbubna@ambahind.com', role: 'Production', password: 'prod123' },
-  { email: 'accounts.team@ambahind.com', role: 'Accounts', password: 'acc123' }
+  { email: 'sauravbubna@ambahind.com', role: 'Admin', password: 'admin123' },
+  { email: 'accounts.team@ambahind.com', role: 'Accounts', password: 'acc123' },
+  { email: 'piyali@ambahind.com', role: 'Accounts', password: 'piyali123' },
+  { email: 'mkt@ambahind.com', role: 'Accounts', password: 'mkt123' },
+  { email: 'zincoxide@ambahind.com', role: 'Accounts', password: 'zinc123' }
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
@@ -44,7 +47,7 @@ function App() {
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || '');
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('userEmail') || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('userAvatar') || '');
-  const [activeModule, setActiveModule] = useState('production');
+  const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'production');
   const [error, setError] = useState('');
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -61,7 +64,11 @@ function App() {
   const [znoSubView, setZnoSubView] = useState('crucible');
 
   // Sales Sub-view state
-  const [salesSubView, setSalesSubView] = useState('panIndiaDash');
+  const [salesSubView, setSalesSubView] = useState(() => {
+    const email = localStorage.getItem('userEmail');
+    if (email === 'mkt@ambahind.com') return 'raipurZnDash';
+    return 'panIndiaDash';
+  });
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
@@ -244,10 +251,23 @@ function App() {
       localStorage.setItem('userEmail', matchedUser.email);
       localStorage.setItem('userAvatar', avatarUrl);
       
-      if (matchedUser.role === 'HR') setActiveModule('hr');
-      else if (matchedUser.role === 'Production') setActiveModule('production');
-      else if (matchedUser.role === 'Accounts') setActiveModule('sales');
-      else setActiveModule('production');
+      let initialModule = 'production';
+      let initialSalesView = 'panIndiaDash';
+
+      if (matchedUser.role === 'HR') initialModule = 'hr';
+      else if (matchedUser.role === 'Production') initialModule = 'production';
+      else if (matchedUser.role === 'Accounts') {
+        initialModule = 'sales';
+        if (matchedUser.email === 'mkt@ambahind.com') {
+          initialSalesView = 'raipurZnDash';
+        } else {
+          initialSalesView = 'panIndiaDash';
+        }
+      }
+
+      setActiveModule(initialModule);
+      setSalesSubView(initialSalesView);
+      localStorage.setItem('activeModule', initialModule);
       
       setError('');
     } else {
@@ -293,6 +313,11 @@ function App() {
       setCalcInput(calcInput === '0' ? val : calcInput + val);
     }
   };
+
+  // Specific Account User Restrictions
+  const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
+  const isMkt = userEmail === 'mkt@ambahind.com';
+  const isRestrictedAccounts = isZincOrPiyali || isMkt;
 
   if (!isLoggedIn) {
     return (
@@ -408,22 +433,24 @@ function App() {
         </header>
 
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '5px' }}>
-          {(userRole === 'Admin' || userRole === 'Production') && (
+          {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
             <button onClick={() => setActiveModule('production')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'production' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'production' ? 'white' : '#1e293b', border: activeModule === 'production' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Production & Despatch</button>
           )}
 
-          {(userRole === 'Admin' || userRole === 'Accounts') && (
+          {(userRole === 'Admin' || userRole === 'Accounts' || isRestrictedAccounts) && (
             <button onClick={() => setActiveModule('sales')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'sales' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'sales' ? 'white' : '#1e293b', border: activeModule === 'sales' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Zinc & PB Sales</button>
           )}
 
-          {(userRole === 'Admin' || userRole === 'HR') && (
+          {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR') && (
             <button onClick={() => setActiveModule('hr')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'hr' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'hr' ? 'white' : '#1e293b', border: activeModule === 'hr' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>HR Master</button>
           )}
 
-          <button onClick={() => setActiveModule('showcase')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'showcase' ? '#0f172a' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'showcase' ? 'white' : '#0f172a', border: '1px solid #0f172a', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>🖼️ Company Showcase</button>
+          {!isRestrictedAccounts && (
+            <button onClick={() => setActiveModule('showcase')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'showcase' ? '#0f172a' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'showcase' ? 'white' : '#0f172a', border: '1px solid #0f172a', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>🖼️ Company Showcase</button>
+          )}
         </nav>
 
-        {activeModule === 'production' && (userRole === 'Admin' || userRole === 'Production') && (
+        {activeModule === 'production' && !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Plant Production & Despatch Filter</h3>
@@ -572,8 +599,8 @@ function App() {
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (SEPARATED DASHBOARDS, TOP 10, ZONE-WISE, LOGS & EXTERNAL FORM BUTTONS) */}
-        {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts') && (
+        {/* ZINC & PB SALES MODULE (WITH EMAIL-BASED RESTRICTIONS) */}
+        {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts' || isRestrictedAccounts) && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Zinc & PB Sales Analytics & Region Selectors</h3>
@@ -581,21 +608,29 @@ function App() {
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales Unit / Department Mode</label>
                   <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
-                    <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
-                    <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records (Newest First)</option>
-                    <option value="panIndiaForm">📝 PAN India — Submit Despatch Form</option>
-                    <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
-                    <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records (Newest First)</option>
-                    <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
-                    <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records (Newest First)</option>
-                    <option value="raipurForm">📝 Raipur — Submit Despatch Form</option>
+                    {!isMkt && (
+                      <>
+                        <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
+                        <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records (Newest First)</option>
+                        <option value="panIndiaForm">📝 PAN India — Submit Despatch Form</option>
+                      </>
+                    )}
+                    {!isZincOrPiyali && (
+                      <>
+                        <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
+                        <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records (Newest First)</option>
+                        <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
+                        <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records (Newest First)</option>
+                        <option value="raipurForm">📝 Raipur — Submit Despatch Form</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
             </section>
 
-            {/* 1. PAN INDIA DASHBOARD & TOP 10 & BREAKDOWN */}
-            {salesSubView === 'panIndiaDash' && (
+            {/* 1. PAN INDIA DASHBOARD & TOP 10 */}
+            {salesSubView === 'panIndiaDash' && !isMkt && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card">
@@ -616,7 +651,6 @@ function App() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-                  {/* Top 10 Customers */}
                   <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                     <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 PAN India — Top 10 Customers</h3>
                     <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
@@ -641,7 +675,6 @@ function App() {
                     </table>
                   </section>
 
-                  {/* Zone / Location Breakdown */}
                   <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                     <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>📍 PAN India — Zone / Location Breakdown</h3>
                     <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
@@ -670,7 +703,7 @@ function App() {
             )}
 
             {/* 2. RAIPUR ZN DASHBOARD & TOP 10 */}
-            {salesSubView === 'raipurZnDash' && (
+            {salesSubView === 'raipurZnDash' && !isZincOrPiyali && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
@@ -717,7 +750,7 @@ function App() {
             )}
 
             {/* 3. RAIPUR PB DASHBOARD & TOP 10 */}
-            {salesSubView === 'raipurPbDash' && (
+            {salesSubView === 'raipurPbDash' && !isZincOrPiyali && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card" style={{ borderLeftColor: '#7c3aed' }}>
@@ -764,7 +797,7 @@ function App() {
             )}
 
             {/* LOG TABLES (DESCENDING / NEWEST FIRST) */}
-            {salesSubView === 'panIndiaLogs' && (
+            {salesSubView === 'panIndiaLogs' && !isMkt && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
@@ -804,7 +837,7 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurZnLogs' && (
+            {salesSubView === 'raipurZnLogs' && !isZincOrPiyali && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
@@ -838,7 +871,7 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurPbLogs' && (
+            {salesSubView === 'raipurPbLogs' && !isZincOrPiyali && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
@@ -873,7 +906,7 @@ function App() {
             )}
 
             {/* EXTERNAL GOOGLE FORMS CARDS */}
-            {salesSubView === 'panIndiaForm' && (
+            {salesSubView === 'panIndiaForm' && !isMkt && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 PAN India Despatch Submission Form</h3>
                 <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
@@ -888,7 +921,7 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurForm' && (
+            {salesSubView === 'raipurForm' && !isZincOrPiyali && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 Raipur Despatch Submission Form</h3>
                 <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
@@ -905,7 +938,7 @@ function App() {
           </div>
         )}
 
-        {activeModule === 'hr' && (userRole === 'Admin' || userRole === 'HR') && (
+        {activeModule === 'hr' && !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR') && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>HR Candidate Onboarding & Joining Entry</h3>
@@ -982,7 +1015,7 @@ function App() {
           </div>
         )}
 
-        {activeModule === 'showcase' && (
+        {activeModule === 'showcase' && !isRestrictedAccounts && (
           <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <h2 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '20px' }}>AMBICA-HIND ✦ Plant Gallery & Leadership</h2>

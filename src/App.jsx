@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
+import LoginScreen from './LoginScreen.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -324,45 +325,17 @@ function App() {
 
   if (!isLoggedIn) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '15px', width: '100%' }}>
-        <form onSubmit={handleLogin} style={{ background: 'rgba(255, 255, 255, 0.96)', padding: '30px 20px', borderRadius: '12px', boxShadow: '0 15px 35px rgba(0,0,0,0.4)', width: '100%', maxWidth: '400px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.3)' }}>
-          <div style={{ marginBottom: '20px', textAlign: 'center' }}>
-            <img 
-              src={`${import.meta.env.BASE_URL}logo.png`} 
-              alt="Ambica-Hind Logo" 
-              style={{ width: '100%', height: 'auto', maxHeight: '75px', objectFit: 'contain', display: 'block', margin: '0 auto' }} 
-            />
-          </div>
-          <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 20px 0', fontWeight: '600' }}>Enterprise Resource & Operations Suite</p>
-
-          {error && <p style={{ color: 'red', fontSize: '12px', marginBottom: '15px', lineHeight: '1.4' }}>{error}</p>}
-          <div style={{ marginBottom: '15px', textAlign: 'left' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px', color: '#334155' }}>Work Email ID</label>
-            <input 
-              type="text" 
-              autoComplete="username"
-              placeholder="e.g. hr.manager@ambahind.com" 
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)} 
-              style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontSize: '14px' }} 
-            />
-          </div>
-          <div style={{ marginBottom: '25px', textAlign: 'left' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '13px', color: '#334155' }}>Password</label>
-            <input 
-              type="password" 
-              autoComplete="current-password"
-              placeholder="Enter password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)} 
-              style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box', fontSize: '14px' }} 
-            />
-          </div>
-          <button type="submit" style={{ width: '100%', padding: '14px', backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-            Secure Login
-          </button>
-        </form>
-      </div>
+      <LoginScreen
+        slides={COMPANY_SLIDES}
+        timeStr={timeStr}
+        dateStr={dateStr}
+        emailInput={emailInput}
+        setEmailInput={setEmailInput}
+        password={password}
+        setPassword={setPassword}
+        error={error}
+        onSubmit={handleLogin}
+      />
     );
   }
 

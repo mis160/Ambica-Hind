@@ -41,25 +41,8 @@ const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
 
 function App() {
-  // Inject manifest dynamically and register Service Worker for mobile PWA installation prompts
-  useEffect(() => {
-    const manifestLink = document.createElement('link');
-    manifestLink.rel = 'manifest';
-    manifestLink.href = `${import.meta.env.BASE_URL}manifest.json`;
-    document.head.appendChild(manifestLink);
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
-          .then((reg) => console.log('Service worker registered successfully:', reg))
-          .catch((err) => console.error('Service worker registration failed:', err));
-      });
-    }
-
-    return () => {
-      document.head.removeChild(manifestLink);
-    };
-  }, []);
+  // NOTE: Manifest link now lives in index.html and the Service Worker
+  // is registered in src/main.jsx, so no PWA code is needed here.
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [emailInput, setEmailInput] = useState('');

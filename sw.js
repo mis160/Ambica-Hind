@@ -1,5 +1,9 @@
-const CACHE_NAME = 'ambica-hind-v3';
+// Ambica-Hind service worker
+// Change the version number below whenever you want every phone to refresh its saved files.
+const CACHE_NAME = 'ambica-hind-v4';
+
 const BASE = self.registration.scope; // https://mis160.github.io/Ambica-Hind/
+const BASE_PATH = new URL(BASE).pathname; // /Ambica-Hind/
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -22,35 +26,44 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   // Only handle GET requests for our own site.
-  // Google Apps Script data/API calls always go straight to the network.
+  // Google Apps Script data calls always go straight to the network.
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Page loads: network first, fall back to cached page when offline
-  if (req.mode === 'navigate') {
+  // Build files in /assets/ have a unique name for every version,
+  // so they are safe to keep and reuse: cache first.
+  if (url.pathname.startsWith(BASE_PATH + 'assets/')) {
     event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(BASE + 'index.html', copy));
-          return res;
-        })
-        .catch(() => caches.match(BASE + 'index.html'))
+      caches.match(req).then(
+        (cached) =>
+          cached ||
+          fetch(req).then((res) => {
+            if (res.ok) {
+              const copy = res.clone();
+              caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+            }
+            return res;
+          })
+      )
     );
     return;
   }
 
-  // Static files (JS/CSS/images): cache first, then save for next time
+  // Everything else (the page, icons, logo, photos, manifest):
+  // network first so updates show up, saved copy only when offline.
   event.respondWith(
-    caches.match(req).then(
-      (cached) =>
-        cached ||
-        fetch(req).then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-    )
+    fetch(req)
+      .then((res) => {
+        if (res.ok) {
+          const copy = res.clone();
+          const key = req.mode === 'navigate' ? BASE + 'index.html' : req;
+          caches.open(CACHE_NAME).then((c) => c.put(key, copy));
+        }
+        return res;
+      })
+      .catch(() =>
+        caches.match(req).then(
+          (cached) => cached || (req.mode === 'navigate' ? caches.match(BASE + 'index.html') : undefined)
+        )
+      )
   );
 });

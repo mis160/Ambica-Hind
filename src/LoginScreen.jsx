@@ -3,6 +3,10 @@ import './LoginScreen.css';
 
 const BASE = import.meta.env.BASE_URL;
 
+// White logo from the company website (www.ambahind.com).
+const LOGO_WEB =
+  'https://storage.googleapis.com/giffycms-ambicahind.appspot.com/Ambica-Hind_Logo-(White)-.png';
+
 export default function LoginScreen({
   slides = [],
   timeStr,
@@ -16,9 +20,13 @@ export default function LoginScreen({
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [index, setIndex] = useState(0);
+  const [logoStep, setLogoStep] = useState(0);
+
+  // Logo order: website white logo -> your own copy "logo-white.png" in public -> old logo.png
+  const logoSources = [LOGO_WEB, `${BASE}logo-white.png`, `${BASE}logo.png`];
 
   // Photos: port-bg first, then the Plant photos from src/assets, then plant-bg.
-  // These two files live in the "public" folder.
+  // port-bg.jpg and plant-bg.png live in the "public" folder.
   const allSlides = useMemo(
     () => [
       { url: `${BASE}port-bg.jpg` },
@@ -54,8 +62,13 @@ export default function LoginScreen({
 
       <main className="lg-layout">
         <section className="lg-hero">
-          <img className="lg-logo" src={`${BASE}logo.png`} alt="Ambica-Hind" />
-          <h1>Production, despatch, sales and HR in one place.</h1>
+          <img
+            className="lg-logo"
+            src={logoSources[logoStep]}
+            alt="Ambica-Hind"
+            onError={() => setLogoStep((s) => Math.min(s + 1, logoSources.length - 1))}
+          />
+          <h1>Stronger. Safer. Superior.</h1>
           <p className="lg-sub">Enterprise Resource &amp; Operations Suite</p>
 
           <div className="lg-clock">

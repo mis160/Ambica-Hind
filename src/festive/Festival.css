@@ -1,8 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Hind:wght@400;600;700&display=swap');
 
-/* Bengali / Hindi text */
+/* Bengali text */
 .fest-bn {
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Nirmala UI', 'Vrinda', system-ui, sans-serif;
+}
+/* Hindi (Devanagari) text */
+.fest-hi {
+  font-family: 'Hind', 'Noto Sans Devanagari', 'Nirmala UI', 'Mangal', system-ui, sans-serif;
+}
+
+/* ---------- languages changing one by one ----------
+   All languages sit in the same spot (one on top of the other). Only the active one is visible,
+   so the box always has the height of the longest text and nothing jumps when the language changes. */
+.fest-stack {
+  display: grid;
+}
+.fest-rot {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.fest-rot.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+.fest-dots {
+  display: inline-flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.fest-dots i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0.35;
+  transition: opacity 0.3s;
+}
+.fest-dots i.on {
+  opacity: 0.95;
 }
 
 /* ---------- strip at the top of the page ---------- */
@@ -29,6 +67,11 @@
   flex: 1;
   min-width: 0;
 }
+.fest-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .fest-banner-text b {
   display: block;
   font-size: 16px;
@@ -41,6 +84,10 @@
   line-height: 1.4;
   opacity: 0.95;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+/* stack layout wins over the plain "display: block" above */
+.fest-banner-text .fest-stack {
+  display: grid;
 }
 .fest-banner-close {
   align-self: flex-start;
@@ -107,6 +154,10 @@
 }
 .fest-en {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   margin: 0;
   font-size: 16px;
   font-weight: 600;
@@ -218,8 +269,12 @@
   .fest-banner-icon {
     font-size: 24px;
   }
+  /* the quote is now shown on phones too, just a little smaller */
+  .fest-banner-text b {
+    font-size: 15px;
+  }
   .fest-banner-text small {
-    display: none;
+    font-size: 12px;
   }
 }
 
@@ -233,5 +288,8 @@
   }
   .fest-particles {
     display: none;
+  }
+  .fest-rot {
+    transition: none;
   }
 }

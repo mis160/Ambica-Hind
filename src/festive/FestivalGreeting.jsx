@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Festival.css';
+import { getTitles, getLines, ROTATE_MS } from './festivals';
 
 const seenKey = (f) => `festivalSeen:${f.id}:${f.day}`;
 
@@ -31,11 +32,36 @@ function Particles({ list }) {
   );
 }
 
+// Small dots that show which language is on screen
+function LangDots({ items, index }) {
+  if (items.length < 2) return null;
+  return (
+    <span aria-hidden="true" style={{ display: 'inline-flex', gap: 5, marginLeft: 8, verticalAlign: 'middle' }}>
+      {items.map((x, i) => (
+        <span
+          key={x.lang}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: '#fff',
+            opacity: i === index ? 0.95 : 0.35,
+            transition: 'opacity 0.3s'
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 // Shows (1) a colourful strip at the top of the page all day and
 //       (2) a greeting popup the first time the app is opened that day.
+// The title and the quote change language one by one: Bengali, English, Hindi.
 export default function FestivalGreeting({ festival }) {
   const [open, setOpen] = useState(false);
   const [bannerHidden, setBannerHidden] = useState(false);
+  const [langIdx, setLangIdx] = useState(0); // which language is showing
+  const [visible, setVisible] = useState(true); // used for the fade in / out
 
   const id = festival ? festival.id : '';
   const day = festival ? festival.day : '';
@@ -59,6 +85,25 @@ export default function FestivalGreeting({ festival }) {
     }
     setOpen(!seen);
   }, [id, day, preview]);
+
+  // Language rotation: fade out, switch language, fade in
+  useEffect(() => {
+    if (!id) return undefined;
+    setLangIdx(0);
+    setVisible(true);
+    let swapTimer;
+    const timer = setInterval(() => {
+      setVisible(false);
+      swapTimer = setTimeout(() => {
+        setLangIdx((i) => i + 1);
+        setVisible(true);
+      }, 300);
+    }, ROTATE_MS);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(swapTimer);
+    };
+  }, [id]);
 
   const close = () => {
     setOpen(false);
@@ -86,6 +131,18 @@ export default function FestivalGreeting({ festival }) {
 
   const vars = { '--c1': festival.colors[0], '--c2': festival.colors[1], '--c3': festival.colors[2] };
 
+  const titles = getTitles(festival); // Bengali, English, Hindi
+  const lines = getLines(festival); // English, Bengali, Hindi
+  const title = titles[langIdx % titles.length];
+  const line = lines[langIdx % lines.length];
+  // Title and quote use the same position in the list, so index for dots follows the quote
+  const dotIdx = langIdx % lines.length;
+
+  const fade = {
+    opacity: visible ? 1 : 0,
+    transition: 'opacity 0.3s ease'
+  };
+
   return (
     <>
       {!bannerHidden && (
@@ -94,10 +151,15 @@ export default function FestivalGreeting({ festival }) {
             {festival.icon}
           </span>
           <div className="fest-banner-text">
-            <b>
-              <span className="fest-bn">{festival.bn}</span> · {festival.en}
+            <b style={fade}>
+              <span className={title.lang === 'bn' ? 'fest-bn' : undefined} lang={title.lang}>
+                {title.text}
+              </span>
+              <LangDots items={titles} index={langIdx % titles.length} />
             </b>
-            <small>{festival.line}</small>
+            <small style={fade} lang={line.lang} className={line.lang === 'bn' ? 'fest-bn' : undefined}>
+              {line.text}
+            </small>
           </div>
           <button type="button" className="fest-banner-close" aria-label="Hide greeting" onClick={() => setBannerHidden(true)}>
             ×
@@ -113,12 +175,22 @@ export default function FestivalGreeting({ festival }) {
               <div className="fest-icon" aria-hidden="true">
                 {festival.icon}
               </div>
-              <h2 className="fest-title fest-bn">{festival.bn}</h2>
-              <p className="fest-en">{festival.en}</p>
+              <h2 className={title.lang === 'bn' ? 'fest-title fest-bn' : 'fest-title'} lang={title.lang} style={fade}>
+                {title.text}
+              </h2>
+              <p className="fest-en" style={{ ...fade, minHeight: '1.4em' }}>
+                {title.label}
+                <LangDots items={titles} index={langIdx % titles.length} />
+              </p>
             </div>
             <div className="fest-body">
-              <p className="fest-line">{festival.line}</p>
-              {festival.lineBn && <p className="fest-line fest-bn">{festival.lineBn}</p>}
+              <p
+                className={line.lang === 'bn' ? 'fest-line fest-bn' : 'fest-line'}
+                lang={line.lang}
+                style={{ ...fade, minHeight: '4.5em' }}
+              >
+                {line.text}
+              </p>
               <p className="fest-sign">With warm wishes from Team Ambica-Hind</p>
               <button type="button" className="fest-btn" onClick={close} autoFocus>
                 Thank you 🙏

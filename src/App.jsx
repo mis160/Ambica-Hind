@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import ceoImage from './assets/ceo.jpg';
 import LoginScreen from './LoginScreen.jsx';
+import HubHome from './hub/HubHome.jsx';
+import ToolsCalculators from './hub/ToolsCalculators.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -51,7 +53,7 @@ function App() {
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || '');
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('userEmail') || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('userAvatar') || '');
-  const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'production');
+  const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'home');
   const [error, setError] = useState('');
 
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -60,8 +62,6 @@ function App() {
   
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedHolidayInfo, setSelectedHolidayInfo] = useState(null);
-
-  const [calcInput, setCalcInput] = useState('0');
 
   // Production dropdown states
   const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
@@ -255,19 +255,9 @@ function App() {
       localStorage.setItem('userEmail', matchedUser.email);
       localStorage.setItem('userAvatar', avatarUrl);
       
-      let initialModule = 'production';
-      let initialSalesView = 'panIndiaDash';
-
-      if (matchedUser.role === 'HR') initialModule = 'hr';
-      else if (matchedUser.role === 'Production') initialModule = 'production';
-      else if (matchedUser.role === 'Accounts' || matchedUser.email === 'piyali@ambahind.com' || matchedUser.email === 'zincoxide@ambahind.com' || matchedUser.email === 'mkt@ambahind.com') {
-        initialModule = 'sales';
-        if (matchedUser.email === 'mkt@ambahind.com') {
-          initialSalesView = 'raipurZnDash';
-        } else {
-          initialSalesView = 'panIndiaDash';
-        }
-      }
+      // Everyone lands on the Home page (notices, rates, quick links)
+      const initialModule = 'home';
+      const initialSalesView = matchedUser.email === 'mkt@ambahind.com' ? 'raipurZnDash' : 'panIndiaDash';
 
       setActiveModule(initialModule);
       setSalesSubView(initialSalesView);
@@ -303,25 +293,24 @@ function App() {
     setNewJoiningDate('');
   };
 
-  const handleCalcBtn = (val) => {
-    if (val === 'C') {
-      setCalcInput('0');
-    } else if (val === '=') {
-      try {
-        // eslint-disable-next-line no-eval
-        setCalcInput(String(eval(calcInput)));
-      } catch {
-        setCalcInput('Error');
-      }
-    } else {
-      setCalcInput(calcInput === '0' ? val : calcInput + val);
-    }
-  };
-
   // Specific Account User Restrictions
   const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
   const isMkt = userEmail === 'mkt@ambahind.com';
   const isRestrictedAccounts = isZincOrPiyali || isMkt;
+
+  // Look of the new Home / Tools tabs (same as the other tabs)
+  const navStyle = (key) => ({
+    padding: '10px 16px',
+    whiteSpace: 'nowrap',
+    backgroundColor: activeModule === key ? '#2563eb' : 'rgba(255, 255, 255, 0.9)',
+    color: activeModule === key ? 'white' : '#1e293b',
+    border: activeModule === key ? 'none' : '1px solid #cbd5e1',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '13px',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+  });
 
   if (!isLoggedIn) {
     return (
@@ -373,16 +362,6 @@ function App() {
             </div>
           )}
         </div>
-
-        <div className="sidebar-card widget-box">
-          <h4>Quick Calculator</h4>
-          <div className="calc-screen">{calcInput}</div>
-          <div className="calc-grid">
-            {['7','8','9','/', '4','5','6','*', '1','2','3','-', '0','C','=','+'].map((btn) => (
-              <button key={btn} onClick={() => handleCalcBtn(btn)}>{btn}</button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* RIGHT COLUMN */}
@@ -409,6 +388,8 @@ function App() {
         </header>
 
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '5px' }}>
+          <button onClick={() => setActiveModule('home')} style={navStyle('home')}>🏠 Home</button>
+
           {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
             <button onClick={() => setActiveModule('production')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'production' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'production' ? 'white' : '#1e293b', border: activeModule === 'production' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Production & Despatch</button>
           )}
@@ -421,10 +402,16 @@ function App() {
             <button onClick={() => setActiveModule('hr')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'hr' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'hr' ? 'white' : '#1e293b', border: activeModule === 'hr' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>HR Master</button>
           )}
 
+          <button onClick={() => setActiveModule('tools')} style={navStyle('tools')}>🧰 Tools</button>
+
           {!isRestrictedAccounts && (
             <button onClick={() => setActiveModule('showcase')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'showcase' ? '#0f172a' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'showcase' ? 'white' : '#0f172a', border: '1px solid #0f172a', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>🖼️ Company Showcase</button>
           )}
         </nav>
+
+        {activeModule === 'home' && <HubHome userRole={userRole} userEmail={userEmail} />}
+
+        {activeModule === 'tools' && <ToolsCalculators />}
 
         {activeModule === 'production' && !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
           <div>

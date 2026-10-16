@@ -1,0 +1,464 @@
+/* Home page (notices, rates, links) and Tools page */
+
+.hub-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+.hub-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  color: #1e293b;
+}
+.hub-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1e293b;
+}
+.hub-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* ---------- top bar ---------- */
+.hub-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  border-left: 6px solid #2563eb;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 12px 20px;
+}
+.hub-toolbar h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+.hub-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hub-updated {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* ---------- buttons ---------- */
+.hub-btn {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.hub-btn:hover {
+  background: #1d4ed8;
+}
+.hub-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.hub-btn.secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.hub-btn.secondary:hover {
+  background: #cbd5e1;
+}
+.hub-link-btn {
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hub-link-btn:hover {
+  text-decoration: underline;
+}
+
+/* ---------- messages ---------- */
+.hub-alert {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.hub-empty {
+  margin: 0;
+  padding: 14px 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.hub-empty code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  font-size: 13px;
+}
+.hub-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ---------- forms ---------- */
+.hub-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.hub-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+.hub-form input[type='text'],
+.hub-form input[type='number'],
+.hub-form input[type='date'],
+.hub-form input[type='password'],
+.hub-form select,
+.hub-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+.hub-form textarea {
+  resize: vertical;
+}
+.hub-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hub-form label.hub-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.hub-rate-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hub-rate-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.hub-rate-row .hub-link-btn {
+  margin-left: 0;
+}
+
+/* ---------- notices ---------- */
+.hub-notices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hub-notice {
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  border-radius: 6px;
+  background: #ffffff;
+}
+.hub-notice.is-pinned {
+  border-left-color: #d97706;
+  background: #fffbeb;
+}
+.hub-notice.is-urgent {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+.hub-notice-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.hub-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 700;
+}
+.hub-pin {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b45309;
+}
+.hub-notice h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #0f172a;
+}
+.hub-notice p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+/* ---------- rates ---------- */
+.hub-table-wrap {
+  overflow-x: auto;
+}
+.hub-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.hub-table th {
+  padding: 8px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 12px;
+  text-align: left;
+}
+.hub-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+}
+.hub-table .r {
+  text-align: right;
+}
+.hub-table small {
+  color: #64748b;
+  font-size: 11px;
+}
+.hub-up {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 13px;
+}
+.hub-down {
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 13px;
+}
+.hub-flat {
+  color: #94a3b8;
+}
+
+/* ---------- quick links ---------- */
+.hub-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.hub-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.hub-link:hover {
+  border-color: #2563eb;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18);
+}
+.hub-link-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+.hub-link b {
+  display: block;
+  font-size: 14px;
+}
+.hub-link small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* ---------- tools ---------- */
+.tool-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 6px;
+  overflow-x: auto;
+}
+.tool-tab {
+  padding: 9px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tool-tab:hover {
+  background: #f1f5f9;
+}
+.tool-tab.is-active {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+.tool-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  color: #0f172a;
+}
+.tool-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.tool-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tool-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+.tool-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tool-input input,
+.tool-input select {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 16px; /* stops iPhone zooming in */
+  font-weight: 400;
+}
+.tool-input em {
+  font-size: 12px;
+  font-style: normal;
+  color: #64748b;
+  white-space: nowrap;
+}
+.tool-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+.tool-result {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 13px;
+  color: #475569;
+}
+.tool-result:last-child {
+  border-bottom: 0;
+}
+.tool-result b {
+  font-size: 15px;
+  color: #0f172a;
+  text-align: right;
+}
+.tool-result.is-strong b {
+  font-size: 18px;
+  color: #1d4ed8;
+}
+.tool-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+/* ---------- phones ---------- */
+@media (max-width: 900px) {
+  .hub-grid {
+    grid-template-columns: 1fr;
+  }
+  .tool-panel {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .hub-form-row {
+    grid-template-columns: 1fr;
+  }
+  .hub-rate-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .hub-rate-row .hub-link-btn {
+    justify-self: end;
+  }
+}

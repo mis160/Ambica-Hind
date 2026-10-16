@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import './Backdrop.css';
 
-// All photos in src/assets/photos are picked up automatically.
-// To add a photo: copy it into that folder. To remove one: delete it from the folder.
-const photoModules = import.meta.glob('../assets/photos/*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
+// All photos in src/assets are picked up automatically by team filename prefix.
+const photoModules = import.meta.glob('../assets/team-*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
 const PHOTOS = Object.values(photoModules).map((m) => m.default);
 
 const hexToRgba = (hex, a) => {

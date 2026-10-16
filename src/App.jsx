@@ -34,9 +34,9 @@ const AUTHORIZED_USERS = [
   { email: 'hr@ambahind.com', role: 'HR', password: 'hr123' },
   { email: 'sauravbubna@ambahind.com', role: 'Admin', password: 'admin123' },
   { email: 'sudiprajak@ambahind.com', role: 'HR', password: 'acc123' },
-  { email: 'piyali@ambahind.com', role: 'Accounts', password: 'piyali123' },
-  { email: 'mkt@ambahind.com', role: 'Accounts', password: 'mkt123' },
-  { email: 'zincoxide@ambahind.com', role: 'Accounts', password: 'zinc123' }
+  { email: 'piyali@ambahind.com', role: 'Sales', password: 'piyali123' },
+  { email: 'mkt@ambahind.com', role: 'Sales', password: 'mkt123' },
+  { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' }
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";

@@ -4,6 +4,9 @@ import ceoImage from './assets/ceo.jpg';
 import LoginScreen from './LoginScreen.jsx';
 import HubHome from './hub/HubHome.jsx';
 import ToolsCalculators from './hub/ToolsCalculators.jsx';
+import AppBackdrop from './backdrop/AppBackdrop.jsx';
+import FestivalGreeting from './festive/FestivalGreeting.jsx';
+import useFestival from './festive/useFestival.js';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -44,6 +47,9 @@ const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
 
 function App() {
+  // Today's festival (or nothing). Picked automatically from src/festive/festivals.js
+  const festival = useFestival();
+
   // NOTE: Manifest link now lives in index.html and the Service Worker
   // is registered in src/main.jsx, so no PWA code is needed here.
 
@@ -298,18 +304,19 @@ function App() {
   const isMkt = userEmail === 'mkt@ambahind.com';
   const isRestrictedAccounts = isZincOrPiyali || isMkt;
 
-  // Look of the new Home / Tools tabs (same as the other tabs)
-  const navStyle = (key) => ({
+  // Look of the navigation tabs: each tab has its own colour
+  const navStyle = (key, color = '#2563eb') => ({
     padding: '10px 16px',
     whiteSpace: 'nowrap',
-    backgroundColor: activeModule === key ? '#2563eb' : 'rgba(255, 255, 255, 0.9)',
-    color: activeModule === key ? 'white' : '#1e293b',
-    border: activeModule === key ? 'none' : '1px solid #cbd5e1',
-    borderRadius: '6px',
+    backgroundColor: activeModule === key ? color : 'rgba(255, 255, 255, 0.92)',
+    color: activeModule === key ? '#ffffff' : color,
+    border: `1px solid ${color}`,
+    borderBottom: `4px solid ${color}`,
+    borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: 'bold',
     fontSize: '13px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+    boxShadow: '0 3px 8px rgba(0,0,0,0.25)'
   });
 
   if (!isLoggedIn) {
@@ -330,6 +337,7 @@ function App() {
 
   return (
     <div className="app-layout-wrapper">
+      <AppBackdrop festival={festival} />
       
       {/* LEFT SIDEBAR */}
       <div className="left-sidebar-column">
@@ -387,25 +395,27 @@ function App() {
           </div>
         </header>
 
+        <FestivalGreeting festival={festival} />
+
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '5px' }}>
-          <button onClick={() => setActiveModule('home')} style={navStyle('home')}>🏠 Home</button>
+          <button onClick={() => setActiveModule('home')} style={navStyle('home', '#2563eb')}>🏠 Home</button>
 
           {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
-            <button onClick={() => setActiveModule('production')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'production' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'production' ? 'white' : '#1e293b', border: activeModule === 'production' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Production & Despatch</button>
+            <button onClick={() => setActiveModule('production')} style={navStyle('production', '#ea580c')}>Production & Despatch</button>
           )}
 
           {(userRole === 'Admin' || userRole === 'Accounts' || isRestrictedAccounts) && (
-            <button onClick={() => setActiveModule('sales')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'sales' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'sales' ? 'white' : '#1e293b', border: activeModule === 'sales' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>Zinc & PB Sales</button>
+            <button onClick={() => setActiveModule('sales')} style={navStyle('sales', '#16a34a')}>Zinc & PB Sales</button>
           )}
 
           {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR') && (
-            <button onClick={() => setActiveModule('hr')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'hr' ? '#2563eb' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'hr' ? 'white' : '#1e293b', border: activeModule === 'hr' ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>HR Master</button>
+            <button onClick={() => setActiveModule('hr')} style={navStyle('hr', '#7c3aed')}>HR Master</button>
           )}
 
-          <button onClick={() => setActiveModule('tools')} style={navStyle('tools')}>🧰 Tools</button>
+          <button onClick={() => setActiveModule('tools')} style={navStyle('tools', '#0891b2')}>🧰 Tools</button>
 
           {!isRestrictedAccounts && (
-            <button onClick={() => setActiveModule('showcase')} style={{ padding: '10px 16px', whiteSpace: 'nowrap', backgroundColor: activeModule === 'showcase' ? '#0f172a' : 'rgba(255, 255, 255, 0.9)', color: activeModule === 'showcase' ? 'white' : '#0f172a', border: '1px solid #0f172a', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>🖼️ Company Showcase</button>
+            <button onClick={() => setActiveModule('showcase')} style={navStyle('showcase', '#db2777')}>🖼️ Company Showcase</button>
           )}
         </nav>
 

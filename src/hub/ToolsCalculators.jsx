@@ -287,7 +287,7 @@ export default function ToolsCalculators() {
 
   return (
     <div className="hub-root">
-      <section className="hub-card">
+      <section className="hub-card accent-teal">
         <div className="hub-card-head">
           <h3>🧰 Tools &amp; calculators</h3>
         </div>

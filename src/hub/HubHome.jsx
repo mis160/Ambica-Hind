@@ -244,7 +244,7 @@ export default function HubHome({ userRole, userEmail }) {
 
       <div className="hub-grid">
         {/* ---------- NOTICE BOARD ---------- */}
-        <section className="hub-card">
+        <section className="hub-card accent-blue">
           <div className="hub-card-head">
             <h3>📢 Notice board</h3>
             {canPostNotice && (
@@ -325,7 +325,7 @@ export default function HubHome({ userRole, userEmail }) {
         </section>
 
         {/* ---------- DAILY RATES ---------- */}
-        <section className="hub-card">
+        <section className="hub-card accent-green">
           <div className="hub-card-head">
             <h3>💹 Daily rates</h3>
             {canEditRates && (
@@ -405,7 +405,7 @@ export default function HubHome({ userRole, userEmail }) {
       </div>
 
       {/* ---------- QUICK LINKS ---------- */}
-      <section className="hub-card">
+      <section className="hub-card accent-purple">
         <div className="hub-card-head">
           <h3>🔗 Quick links &amp; documents</h3>
         </div>

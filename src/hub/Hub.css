@@ -494,3 +494,17 @@
 .tool-tab:nth-child(6n + 4).is-active { background: #7c3aed; border-color: #7c3aed; }
 .tool-tab:nth-child(6n + 5).is-active { background: #0891b2; border-color: #0891b2; }
 .tool-tab:nth-child(6n + 6).is-active { background: #db2777; border-color: #db2777; }
+/* ---------- see-through cards over the photo backdrop ---------- */
+.hub-card,
+.hub-toolbar {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.hub-card {
+  background: rgba(255, 255, 255, 0.84);
+}
+.hub-card.accent-blue   { background: linear-gradient(180deg, rgba(239, 246, 255, 0.92) 0%, rgba(255, 255, 255, 0.82) 90px); }
+.hub-card.accent-green  { background: linear-gradient(180deg, rgba(240, 253, 244, 0.92) 0%, rgba(255, 255, 255, 0.82) 90px); }
+.hub-card.accent-purple { background: linear-gradient(180deg, rgba(245, 243, 255, 0.92) 0%, rgba(255, 255, 255, 0.82) 90px); }
+.hub-card.accent-teal   { background: linear-gradient(180deg, rgba(236, 254, 255, 0.92) 0%, rgba(255, 255, 255, 0.82) 90px); }
+.hub-toolbar            { background: linear-gradient(90deg, rgba(255, 251, 235, 0.92) 0%, rgba(255, 255, 255, 0.82) 55%); }

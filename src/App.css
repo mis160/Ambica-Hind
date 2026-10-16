@@ -232,3 +232,19 @@ body {
     width: 190px;
   }
 }
+
+/* Extra compact: the calendar and holiday box open only on hover or tap */
+.left-sidebar-column .widget-box label,
+.left-sidebar-column .widget-box .calendar-input,
+.left-sidebar-column .widget-box .holiday-result-box {
+  display: none;
+}
+
+.left-sidebar-column .widget-box:hover label,
+.left-sidebar-column .widget-box:hover .calendar-input,
+.left-sidebar-column .widget-box:hover .holiday-result-box,
+.left-sidebar-column .widget-box:focus-within label,
+.left-sidebar-column .widget-box:focus-within .calendar-input,
+.left-sidebar-column .widget-box:focus-within .holiday-result-box {
+  display: block;
+}

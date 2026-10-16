@@ -96,7 +96,7 @@ function durgaSeries(year, panchamiDate) {
 // ---------------------------------------------------------------------------
 export const DATED = [
   // ----- Durga Puja -----
-  ...durgaSeries(2026, '2026-10-16'),
+  ...durgaSeries(2026, '2026-10-15'),
   ...durgaSeries(2027, '2027-10-04'),
 
   // ----- Rest of 2026 -----

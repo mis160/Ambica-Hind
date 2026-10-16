@@ -11,7 +11,7 @@ const hexToRgba = (hex, a) => {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 };
 
-// Default colour wash: deep navy, blue and teal. On a festival day it turns into the festival's colours.
+// Default colour wash: deep navy, blue and teal. Kept consistent like the login page.
 const DEFAULT_TINT =
   'linear-gradient(135deg, rgba(8, 15, 40, 0.90) 0%, rgba(30, 58, 138, 0.72) 42%, rgba(13, 148, 136, 0.62) 100%)';
 
@@ -26,9 +26,7 @@ export default function AppBackdrop({ festival }) {
     return () => clearInterval(timer);
   }, [count]);
 
-  const tint = festival
-    ? `linear-gradient(135deg, ${hexToRgba(festival.colors[0], 0.9)} 0%, ${hexToRgba(festival.colors[1], 0.72)} 48%, ${hexToRgba(festival.colors[2], 0.62)} 100%)`
-    : DEFAULT_TINT;
+  const tint = DEFAULT_TINT;
 
   // Only the current, previous and next photo are loaded, which saves mobile data
   const loaded = new Set([index, (index - 1 + count) % count, (index + 1) % count]);

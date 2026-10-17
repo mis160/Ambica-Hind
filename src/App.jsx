@@ -7,6 +7,7 @@ import ToolsCalculators from './hub/ToolsCalculators.jsx';
 import AppBackdrop from './backdrop/AppBackdrop.jsx';
 import FestivalGreeting from './festive/FestivalGreeting.jsx';
 import useFestival from './festive/useFestival.js';
+import WireDashboard from './wire/WireDashboard.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -548,27 +549,7 @@ function App() {
               </section>
             )}
 
-            {prodUnit !== 'Zinc Oxide (ZNO)' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Live Plant Production Logs for {prodUnit}</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '500px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Date</th>
-                      <th style={{ padding: '10px' }}>Unit</th>
-                      <th style={{ padding: '10px' }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px' }}>2026-10-08</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{prodUnit}</td>
-                      <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>Operational & Synced</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
-            )}
+            {prodUnit !== 'Zinc Oxide (ZNO)' && <WireDashboard unit={prodUnit} />}
           </div>
         )}
 

@@ -1,0 +1,19 @@
+/* Bottom photo slideshow: fills the empty side areas with a soft, blurred copy of the same photo.
+   The full photo stays visible (nothing is cropped) and there are no black bars. */
+
+.bottom-slideshow-container {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate; /* keeps the blurred layer behind the photo */
+}
+
+.bottom-slideshow-container::before {
+  content: '';
+  position: absolute;
+  inset: -40px; /* a little larger than the box so the blurred edges never show */
+  z-index: -1;
+  background-image: var(--slide-url);
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px) brightness(0.8) saturate(1.2);
+}

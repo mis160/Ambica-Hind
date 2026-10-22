@@ -56,7 +56,7 @@ function LangDots({ items, index }) {
 
 // Shows (1) a colourful strip at the top of the page all day and
 //       (2) a greeting popup the first time the app is opened that day.
-// The title and the quote change language one by one: Bengali, English, Hindi.
+// The title and the quote change language one by one: Bengali → English.
 export default function FestivalGreeting({ festival }) {
   const [open, setOpen] = useState(false);
   const [bannerHidden, setBannerHidden] = useState(false);
@@ -131,8 +131,8 @@ export default function FestivalGreeting({ festival }) {
 
   const vars = { '--c1': festival.colors[0], '--c2': festival.colors[1], '--c3': festival.colors[2] };
 
-  const titles = getTitles(festival); // Bengali, English, Hindi
-  const lines = getLines(festival); // English, Bengali, Hindi
+  const titles = getTitles(festival); // Bengali, English
+  const lines = getLines(festival);   // English, Bengali
   const title = titles[langIdx % titles.length];
   const line = lines[langIdx % lines.length];
   // Title and quote use the same position in the list, so index for dots follows the quote

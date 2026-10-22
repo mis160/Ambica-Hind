@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './SlideshowFill.css';
 import ceoImage from './assets/ceo.jpg';
 import LoginScreen from './LoginScreen.jsx';
 import HubHome from './hub/HubHome.jsx';
@@ -1005,7 +1006,10 @@ function App() {
 
         {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
         <div className="bottom-slideshow-section">
-          <div className="bottom-slideshow-container">
+          <div
+            className="bottom-slideshow-container"
+            style={COMPANY_SLIDES.length > 0 ? { '--slide-url': `url("${COMPANY_SLIDES[currentSlide]?.url}")` } : undefined}
+          >
             {COMPANY_SLIDES.length > 0 ? (
               <img src={COMPANY_SLIDES[currentSlide]?.url} alt="Company Slide" />
             ) : (

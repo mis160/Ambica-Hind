@@ -39,6 +39,7 @@ const AUTHORIZED_USERS = [
   { email: 'sudiprajak@ambahind.com', role: 'HR', password: 'acc123' },
   { email: 'piyali@ambahind.com', role: 'Sales', password: 'piyali123' },
   { email: 'mkt@ambahind.com', role: 'Sales', password: 'mkt123' },
+  { email: 'costing@ambahind.com', role: 'Production & Despatch', password: 'costing123' },
   { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' }
 ];
 

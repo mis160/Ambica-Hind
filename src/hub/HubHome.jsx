@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import './Hub.css';
-import { fetchHub, postHub, hubConnected, isSafeUrl } from './hubApi.js';
+import { fetchHub, postHub, hubConnected, isSafeUrl, PRODUCTION_TAGS } from './hubApi.js';
 
 const NOTICE_CATEGORIES = ['General', 'Urgent', 'Holiday', 'Safety', 'Production', 'HR', 'Accounts', 'Sales'];
 const NOTICE_EDITORS = ['Admin', 'HR']; // who sees the "Post a notice" button
@@ -226,7 +226,10 @@ export default function HubHome({ userRole, userEmail }) {
   }
 
   const latestRateDate = data.rates.reduce((best, r) => (r.date && r.date > best ? r.date : best), '');
-  const links = data.links.filter((l) => isSafeUrl(l.url));
+  // Production forms (Category ZNO / WD / GI / Production) are shown in the Production tab instead
+  const links = data.links.filter(
+    (l) => isSafeUrl(l.url) && !PRODUCTION_TAGS.includes(String(l.category || '').trim().toUpperCase())
+  );
 
   return (
     <div className="hub-root">

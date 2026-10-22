@@ -9,6 +9,7 @@ import AppBackdrop from './backdrop/AppBackdrop.jsx';
 import FestivalGreeting from './festive/FestivalGreeting.jsx';
 import useFestival from './festive/useFestival.js';
 import WireDashboard from './wire/WireDashboard.jsx';
+import ProductionLinks from './hub/ProductionLinks.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -451,6 +452,8 @@ function App() {
                 )}
               </div>
             </section>
+
+            <ProductionLinks unit={prodUnit} />
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'crucible' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>

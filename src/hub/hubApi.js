@@ -4,6 +4,10 @@ import { HUB_API_URL } from './hubConfig.js';
 export const hubConnected = () =>
   typeof HUB_API_URL === 'string' && HUB_API_URL.startsWith('https://script.google.com/');
 
+// Links whose Category is one of these show in the Production tab (not on Home):
+//   ZNO = Zinc Oxide only, WD = Wire Plant only, GI = Galvanizing only, Production = all three
+export const PRODUCTION_TAGS = ['ZNO', 'WD', 'GI', 'PRODUCTION'];
+
 // Only allow normal web links (blocks things like javascript: links)
 export const isSafeUrl = (url) => /^https?:\/\//i.test(String(url || ''));
 

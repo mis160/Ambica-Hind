@@ -265,8 +265,9 @@ function App() {
       localStorage.setItem('userEmail', matchedUser.email);
       localStorage.setItem('userAvatar', avatarUrl);
       
-      // Everyone lands on the Home page (notices, rates, quick links)
-      const initialModule = 'home';
+      // Everyone lands on the Home page (notices, rates, quick links),
+      // except the costing login, which opens straight on Production & Despatch.
+      const initialModule = matchedUser.email === 'costing@ambahind.com' ? 'production' : 'home';
       const initialSalesView = matchedUser.email === 'mkt@ambahind.com' ? 'raipurZnDash' : 'panIndiaDash';
 
       setActiveModule(initialModule);
@@ -307,6 +308,11 @@ function App() {
   const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
   const isMkt = userEmail === 'mkt@ambahind.com';
   const isRestrictedAccounts = isZincOrPiyali || isMkt;
+
+  // Who can open the Production & Despatch module
+  const canSeeProduction =
+    !isRestrictedAccounts &&
+    ['Admin', 'Production', 'Production & Despatch'].includes(userRole);
 
   // Look of the navigation tabs: each tab has its own colour
   const navStyle = (key, color = '#2563eb') => ({
@@ -404,7 +410,7 @@ function App() {
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '5px' }}>
           <button onClick={() => setActiveModule('home')} style={navStyle('home', '#2563eb')}>🏠 Home</button>
 
-          {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
+          {canSeeProduction && (
             <button onClick={() => setActiveModule('production')} style={navStyle('production', '#ea580c')}>Production & Despatch</button>
           )}
 
@@ -427,7 +433,7 @@ function App() {
 
         {activeModule === 'tools' && <ToolsCalculators />}
 
-        {activeModule === 'production' && !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'Production') && (
+        {activeModule === 'production' && canSeeProduction && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Plant Production & Despatch Filter</h3>

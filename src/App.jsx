@@ -10,6 +10,7 @@ import FestivalGreeting from './festive/FestivalGreeting.jsx';
 import useFestival from './festive/useFestival.js';
 import WireDashboard from './wire/WireDashboard.jsx';
 import ProductionLinks from './hub/ProductionLinks.jsx';
+import ZnoOps from './zno/ZnoOps.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -40,22 +41,22 @@ const AUTHORIZED_USERS = [
   { email: 'piyali@ambahind.com', role: 'Sales', password: 'piyali123' },
   { email: 'mkt@ambahind.com', role: 'Sales', password: 'mkt123' },
   { email: 'costing@ambahind.com', role: 'Production & Despatch', password: 'costing123' },
-  { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' }
+  { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' },
+  { email: 'wire.works@ambahind.com', role: 'Production & Despatch', password: 'wire123' }
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
 const PAN_INDIA_API_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec?action=data";
 const RAIPUR_API_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec?action=data";
 
+// HR joining-kit Apps Script (Code.gs) -> doGet ?action=hr
+const HR_API_URL = "https://script.google.com/macros/s/AKfycbxcl3BNhQ56I46erm-_OpbLj_rB3B8dq4W0PwbdNXhD9infW8voeNLbNQzVOfenB2E/exec?action=hr";
+
 const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec";
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
 
 function App() {
-  // Today's festival (or nothing). Picked automatically from src/festive/festivals.js
   const festival = useFestival();
-
-  // NOTE: Manifest link now lives in index.html and the Service Worker
-  // is registered in src/main.jsx, so no PWA code is needed here.
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('isLoggedIn') === 'true');
   const [emailInput, setEmailInput] = useState('');
@@ -69,18 +70,23 @@ function App() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
-  
+
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedHolidayInfo, setSelectedHolidayInfo] = useState(null);
 
   // Production dropdown states
-  const [prodUnit, setProdUnit] = useState('Zinc Oxide (ZNO)');
+  const [prodUnit, setProdUnit] = useState(() => {
+    const email = localStorage.getItem('userEmail');
+    if (email === 'wire.works@ambahind.com') return 'Wire Plant (WD)';
+    return 'Zinc Oxide (ZNO)';
+  });
   const [znoSubView, setZnoSubView] = useState('crucible');
 
-  // Sales Sub-view state
+  // Sales Sub-view state (used inside each major sales tab)
   const [salesSubView, setSalesSubView] = useState(() => {
     const email = localStorage.getItem('userEmail');
-    if (email === 'mkt@ambahind.com') return 'raipurZnDash';
+    if (email === 'mkt@ambahind.com') return 'raipurForm';
+    if (email === 'piyali@ambahind.com' || email === 'zincoxide@ambahind.com') return 'panIndiaForm';
     return 'panIndiaDash';
   });
 
@@ -97,26 +103,21 @@ function App() {
   const [salesErrors, setSalesErrors] = useState({ panIndia: '', raipur: '' });
   const [salesLoaded, setSalesLoaded] = useState(false);
 
-  const [joiningMaster, setJoiningMaster] = useState([
-    { id: 1, candidateId: 'EMP-2026-01', name: 'Rohan Sharma', dept: 'Production', designation: 'Plant Supervisor', joiningDate: '2026-10-15', status: 'Verified & Kit Dispatched' }
-  ]);
-  const [newCandidateId, setNewCandidateId] = useState('');
-  const [newCandidateName, setNewCandidateName] = useState('');
-  const [newDept, setNewDept] = useState('Production');
-  const [newDesignation, setNewDesignation] = useState('');
-  const [newJoiningDate, setNewJoiningDate] = useState('');
-  const [newStatus, setNewStatus] = useState('Verified & Kit Dispatched');
+  // HR live data (from Joining Kit Apps Script)
+  const [hrData, setHrData] = useState({ candidates: [], responses: [], documents: [] });
+  const [hrError, setHrError] = useState('');
+  const [hrLoaded, setHrLoaded] = useState(false);
+  const [hrSearch, setHrSearch] = useState('');
+  const [hrReloadKey, setHrReloadKey] = useState(0);
 
-  // Fetch all live spreadsheet datasets from Google Sheet API on load
+  // Fetch production data
   useEffect(() => {
     async function fetchLiveSpreadsheetData() {
       try {
         const response = await fetch(PRODUCTION_API_URL);
         if (!response.ok) throw new Error('Server responded with status ' + response.status);
         const data = await response.json();
-
         if (data && data.error) throw new Error(data.error);
-
         if (data) {
           if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
           if (Array.isArray(data.monthlyCosting)) {
@@ -134,11 +135,10 @@ function App() {
         setDataLoaded(true);
       }
     }
-
     fetchLiveSpreadsheetData();
   }, []);
 
-  // Fetch sales data from the PAN India and Raipur web apps
+  // Fetch sales data
   useEffect(() => {
     async function getJson(url) {
       const response = await fetch(url);
@@ -175,9 +175,41 @@ function App() {
       setSalesErrors(errors);
       setSalesLoaded(true);
     }
-
     fetchSalesData();
   }, []);
+
+  // Fetch HR data – only when the HR tab is opened (and on Refresh)
+  useEffect(() => {
+    if (!isLoggedIn || activeModule !== 'hr') return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setHrLoaded(false);
+        const res = await fetch(HR_API_URL);
+        if (!res.ok) throw new Error('Server responded with status ' + res.status);
+        const data = await res.json();
+        if (data && data.error) throw new Error(data.error);
+        if (!cancelled) {
+          setHrData({
+            candidates: Array.isArray(data.candidates) ? data.candidates : [],
+            responses: Array.isArray(data.responses) ? data.responses : [],
+            documents: Array.isArray(data.documents) ? data.documents : []
+          });
+          setHrError('');
+        }
+      } catch (err) {
+        console.error('Error loading HR data:', err);
+        if (!cancelled) {
+          setHrError('Could not load HR data (' + (err && err.message ? err.message : err) + ').');
+        }
+      } finally {
+        if (!cancelled) setHrLoaded(true);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [activeModule, isLoggedIn, hrReloadKey]);
 
   const emptyMessage = (label) => {
     if (loadError) return loadError;
@@ -193,7 +225,6 @@ function App() {
   };
   const salesEmptyColor = (source) => (salesErrors[source] ? '#dc2626' : '#64748b');
 
-  // Helper aggregation for Top 10 Customers & Zone-wise Breakdown
   const getTopCustomers = (salesArr, limit = 10) => {
     const map = {};
     salesArr.forEach(s => {
@@ -229,7 +260,6 @@ function App() {
       const now = new Date();
       const optionsTime = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
       const optionsDate = { timeZone: 'Asia/Kolkata', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-      
       setTimeStr(new Intl.DateTimeFormat('en-US', optionsTime).format(now));
       setDateStr(new Intl.DateTimeFormat('en-US', optionsDate).format(now));
     }, 1000);
@@ -254,6 +284,12 @@ function App() {
     );
 
     if (matchedUser) {
+      if (matchedUser.email === 'costing@ambahind.com') {
+        setProdUnit('Zinc Oxide (ZNO)');
+      } else if (matchedUser.email === 'wire.works@ambahind.com') {
+        setProdUnit('Wire Plant (WD)');
+      }
+
       setIsLoggedIn(true);
       setUserRole(matchedUser.role);
       setUserEmail(matchedUser.email);
@@ -264,16 +300,20 @@ function App() {
       localStorage.setItem('userRole', matchedUser.role);
       localStorage.setItem('userEmail', matchedUser.email);
       localStorage.setItem('userAvatar', avatarUrl);
-      
-      // Everyone lands on the Home page (notices, rates, quick links),
-      // except the costing login, which opens straight on Production & Despatch.
+
       const initialModule = matchedUser.email === 'costing@ambahind.com' ? 'production' : 'home';
-      const initialSalesView = matchedUser.email === 'mkt@ambahind.com' ? 'raipurZnDash' : 'panIndiaDash';
+
+      const initialSalesView =
+        matchedUser.email === 'mkt@ambahind.com'
+          ? 'raipurForm'
+          : matchedUser.email === 'piyali@ambahind.com' || matchedUser.email === 'zincoxide@ambahind.com'
+            ? 'panIndiaForm'
+            : 'panIndiaDash';
 
       setActiveModule(initialModule);
       setSalesSubView(initialSalesView);
       localStorage.setItem('activeModule', initialModule);
-      
+
       setError('');
     } else {
       setError('Unauthorized email or incorrect password. Please check your credentials.');
@@ -285,36 +325,35 @@ function App() {
     setIsLoggedIn(false);
   };
 
-  const handleAddCandidate = (e) => {
-    e.preventDefault();
-    if (!newCandidateId || !newCandidateName || !newDesignation || !newJoiningDate) return;
-    const newEntry = {
-      id: joiningMaster.length + 1,
-      candidateId: newCandidateId,
-      name: newCandidateName,
-      dept: newDept,
-      designation: newDesignation,
-      joiningDate: newJoiningDate,
-      status: newStatus
-    };
-    setJoiningMaster([newEntry, ...joiningMaster]);
-    setNewCandidateId('');
-    setNewCandidateName('');
-    setNewDesignation('');
-    setNewJoiningDate('');
-  };
-
   // Specific Account User Restrictions
   const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
   const isMkt = userEmail === 'mkt@ambahind.com';
   const isRestrictedAccounts = isZincOrPiyali || isMkt;
+  const isCostingUser = userEmail === 'costing@ambahind.com';
+  const isWireWorksUser = userEmail === 'wire.works@ambahind.com';
 
-  // Who can open the Production & Despatch module
+  // Who can open which modules
   const canSeeProduction =
     !isRestrictedAccounts &&
     ['Admin', 'Production', 'Production & Despatch'].includes(userRole);
 
-  // Look of the navigation tabs: each tab has its own colour
+  const canSeePanIndia = isZincOrPiyali || (!isMkt && (userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales'));
+  const canSeeRaipur   = isMkt || (!isZincOrPiyali && (userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales'));
+  const canSeeHr = !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR');
+
+  // HR derived values (plain computations – no hooks)
+  const hrCandidates = hrData.candidates;
+  const hrDocuments = hrData.documents;
+  const hrTotal = hrCandidates.length;
+  const hrSubmitted = hrCandidates.filter(c => c.formStatus === 'Submitted').length;
+  const hrPending = hrTotal - hrSubmitted;
+  const hrQuery = hrSearch.toLowerCase().trim();
+  const hrFiltered = hrCandidates.filter(c =>
+    !hrQuery || [c.candidateId, c.candidateName, c.department, c.designation, c.email]
+      .some(v => String(v || '').toLowerCase().includes(hrQuery))
+  );
+
+  // Look of the navigation tabs
   const navStyle = (key, color = '#2563eb') => ({
     padding: '10px 16px',
     whiteSpace: 'nowrap',
@@ -348,7 +387,7 @@ function App() {
   return (
     <div className="app-layout-wrapper">
       <AppBackdrop festival={festival} />
-      
+
       {/* LEFT SIDEBAR */}
       <div className="left-sidebar-column">
         <div className="sidebar-card">
@@ -360,11 +399,11 @@ function App() {
           <h4>IST Clock & Calendar</h4>
           <div className="clock-display">{timeStr || 'Loading...'}</div>
           <div style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center', marginBottom: '8px' }}>{dateStr}</div>
-          
+
           <label style={{ fontSize: '10px', color: '#38bdf8', fontWeight: 'bold', display: 'block' }}>Pick Date to Check Holiday:</label>
-          <input 
-            type="date" 
-            value={selectedDate} 
+          <input
+            type="date"
+            value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="calendar-input"
           />
@@ -386,10 +425,10 @@ function App() {
       <div className="main-content-column">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', background: 'rgba(255, 255, 255, 0.95)', padding: '15px 20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', borderLeft: '6px solid #2563eb' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img 
-              src={userAvatar} 
-              alt={userRole} 
-              style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb', background: '#fff' }} 
+            <img
+              src={userAvatar}
+              alt={userRole}
+              style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb', background: '#fff' }}
             />
             <div>
               <h2 style={{ margin: 0, color: '#0f172a', fontSize: '18px', fontWeight: '800' }}>AMBICA-HIND</h2>
@@ -407,6 +446,7 @@ function App() {
 
         <FestivalGreeting festival={festival} />
 
+        {/* ===================== NAVIGATION ===================== */}
         <nav style={{ display: 'flex', gap: '8px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '5px' }}>
           <button onClick={() => setActiveModule('home')} style={navStyle('home', '#2563eb')}>🏠 Home</button>
 
@@ -414,11 +454,20 @@ function App() {
             <button onClick={() => setActiveModule('production')} style={navStyle('production', '#ea580c')}>Production & Despatch</button>
           )}
 
-          {(userRole === 'Admin' || userRole === 'Accounts' || isRestrictedAccounts) && (
-            <button onClick={() => setActiveModule('sales')} style={navStyle('sales', '#16a34a')}>Zinc & PB Sales</button>
+          {/* Separate tabs */}
+          {canSeePanIndia && (
+            <button onClick={() => { setActiveModule('panIndia'); setSalesSubView(isZincOrPiyali ? 'panIndiaForm' : 'panIndiaDash'); }} style={navStyle('panIndia', '#16a34a')}>
+              🌐 PAN India
+            </button>
           )}
 
-          {!isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR') && (
+          {canSeeRaipur && (
+            <button onClick={() => { setActiveModule('raipur'); setSalesSubView(isMkt ? 'raipurForm' : 'raipurZnDash'); }} style={navStyle('raipur', '#0d9488')}>
+              🏭 Raipur
+            </button>
+          )}
+
+          {canSeeHr && (
             <button onClick={() => setActiveModule('hr')} style={navStyle('hr', '#7c3aed')}>HR Master</button>
           )}
 
@@ -433,6 +482,7 @@ function App() {
 
         {activeModule === 'tools' && <ToolsCalculators />}
 
+        {/* ===================== PRODUCTION ===================== */}
         {activeModule === 'production' && canSeeProduction && (
           <div>
             <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
@@ -440,10 +490,20 @@ function App() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Manufacturing Unit</label>
-                  <select value={prodUnit} onChange={(e) => setProdUnit(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Zinc Oxide (ZNO)">Zinc Oxide (ZNO)</option>
-                    <option value="Wire Plant (WD)">Wire Plant (WD)</option>
-                    <option value="Galvanizing (GI)">Galvanizing (GI)</option>
+                  <select
+                    value={prodUnit}
+                    onChange={(e) => setProdUnit(e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  >
+                    {!isWireWorksUser && (
+                      <option value="Zinc Oxide (ZNO)">Zinc Oxide (ZNO)</option>
+                    )}
+                    {!isCostingUser && (
+                      <>
+                        <option value="Wire Plant (WD)">Wire Plant (WD)</option>
+                        <option value="Galvanizing (GI)">Galvanizing (GI)</option>
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -454,6 +514,10 @@ function App() {
                       <option value="crucible">🔥 Crucible Life & History Tracker</option>
                       <option value="monthlyCosting">📊 P5 & P7 All Costing Month Wise</option>
                       <option value="productionDash">📈 Executive Production Dashboard</option>
+                      <option value="opsDash">📦 Production · Lab · Despatch Dashboard</option>
+                      <option value="labReport">🧪 Lab Test Report (Grade Y / N)</option>
+                      <option value="gradeReport">🏅 Grade Report (Pass / Fail reasons)</option>
+                      <option value="stock">📚 Actual Stock & Stock Book</option>
                     </select>
                   </div>
                 )}
@@ -560,42 +624,51 @@ function App() {
               </section>
             )}
 
+            {prodUnit === 'Zinc Oxide (ZNO)' && ['opsDash', 'labReport', 'gradeReport', 'stock'].includes(znoSubView) && (
+              <ZnoOps view={znoSubView} />
+            )}
+
             {prodUnit !== 'Zinc Oxide (ZNO)' && <WireDashboard unit={prodUnit} />}
           </div>
         )}
 
-        {/* ZINC & PB SALES MODULE (WITH EMAIL-BASED RESTRICTIONS) */}
-        {activeModule === 'sales' && (userRole === 'Admin' || userRole === 'Accounts' || isRestrictedAccounts) && (
+        {/* ===================== PAN INDIA TAB ===================== */}
+        {activeModule === 'panIndia' && canSeePanIndia && (
           <div>
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Zinc & PB Sales Analytics & Region Selectors</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Sales Unit / Department Mode</label>
-                  <select value={salesSubView} onChange={(e) => setSalesSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}>
-                    {!isMkt && (
-                      <>
-                        <option value="panIndiaDash">📊 PAN India — Executive Dashboard & Top 10</option>
-                        <option value="panIndiaLogs">🌐 PAN India — Full Despatch Records (Newest First)</option>
-                        <option value="panIndiaForm">📝 PAN India — Submit Despatch Form</option>
-                      </>
-                    )}
-                    {!isZincOrPiyali && (
-                      <>
-                        <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
-                        <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records (Newest First)</option>
-                        <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
-                        <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records (Newest First)</option>
-                        <option value="raipurForm">📝 Raipur — Submit Despatch Form</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-              </div>
-            </section>
+            {/* Sub-view selector – only for full users */}
+            {!isZincOrPiyali && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>PAN India — View Selector</h3>
+                <select
+                  value={salesSubView}
+                  onChange={(e) => setSalesSubView(e.target.value)}
+                  style={{ width: '100%', maxWidth: '420px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}
+                >
+                  <option value="panIndiaDash">📊 Executive Dashboard & Top 10</option>
+                  <option value="panIndiaLogs">🌐 Full Despatch Records (Newest First)</option>
+                  <option value="panIndiaForm">📝 Submit Despatch Form</option>
+                </select>
+              </section>
+            )}
 
-            {/* 1. PAN INDIA DASHBOARD & TOP 10 */}
-            {salesSubView === 'panIndiaDash' && !isMkt && (
+            {/* Restricted users (piyali / zincoxide) only see the form */}
+            {(isZincOrPiyali || salesSubView === 'panIndiaForm') && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 PAN India Despatch Submission Form</h3>
+                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab.</p>
+                <a
+                  href={PAN_INDIA_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
+                >
+                  Open PAN India Form in New Tab ↗
+                </a>
+              </section>
+            )}
+
+            {/* Full users – Dashboard */}
+            {!isZincOrPiyali && salesSubView === 'panIndiaDash' && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card">
@@ -667,8 +740,88 @@ function App() {
               </div>
             )}
 
-            {/* 2. RAIPUR ZN DASHBOARD & TOP 10 */}
-            {salesSubView === 'raipurZnDash' && !isZincOrPiyali && (
+            {/* Full users – Logs */}
+            {!isZincOrPiyali && salesSubView === 'panIndiaLogs' && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Newest First)</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                      <th style={{ padding: '10px' }}>Date</th>
+                      <th style={{ padding: '10px' }}>Customer Name</th>
+                      <th style={{ padding: '10px' }}>Business Category</th>
+                      <th style={{ padding: '10px' }}>Material</th>
+                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
+                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
+                      <th style={{ padding: '10px' }}>Billing Unit</th>
+                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
+                      <th style={{ padding: '10px' }}>Location</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {livePanIndiaSales.length > 0 ? (
+                      livePanIndiaSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                          <td style={{ padding: '10px' }}>{item.date}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
+                          <td style={{ padding: '10px' }}>{item.category}</td>
+                          <td style={{ padding: '10px' }}>{item.material}</td>
+                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
+                          <td style={{ padding: '10px' }}>{item.billingUnit}</td>
+                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
+                          <td style={{ padding: '10px' }}>{item.location}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('panIndia') }}>{salesEmptyMessage('PAN India sales records', 'panIndia')}</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </section>
+            )}
+          </div>
+        )}
+
+        {/* ===================== RAIPUR TAB ===================== */}
+        {activeModule === 'raipur' && canSeeRaipur && (
+          <div>
+            {/* Sub-view selector – only for full users */}
+            {!isMkt && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Raipur — View Selector</h3>
+                <select
+                  value={salesSubView}
+                  onChange={(e) => setSalesSubView(e.target.value)}
+                  style={{ width: '100%', maxWidth: '420px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}
+                >
+                  <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
+                  <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records</option>
+                  <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
+                  <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records</option>
+                  <option value="raipurForm">📝 Submit Despatch Form</option>
+                </select>
+              </section>
+            )}
+
+            {/* Restricted user (mkt) only sees the form */}
+            {(isMkt || salesSubView === 'raipurForm') && (
+              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
+                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 Raipur Despatch Submission Form</h3>
+                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab.</p>
+                <a
+                  href={RAIPUR_FORM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#0d9488', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
+                >
+                  Open Raipur Form in New Tab ↗
+                </a>
+              </section>
+            )}
+
+            {/* Full users – ZN Dashboard */}
+            {!isMkt && salesSubView === 'raipurZnDash' && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
@@ -714,8 +867,8 @@ function App() {
               </div>
             )}
 
-            {/* 3. RAIPUR PB DASHBOARD & TOP 10 */}
-            {salesSubView === 'raipurPbDash' && !isZincOrPiyali && (
+            {/* Full users – PB Dashboard */}
+            {!isMkt && salesSubView === 'raipurPbDash' && (
               <div>
                 <div className="sales-metric-grid">
                   <div className="sales-metric-card" style={{ borderLeftColor: '#7c3aed' }}>
@@ -761,48 +914,8 @@ function App() {
               </div>
             )}
 
-            {/* LOG TABLES (DESCENDING / NEWEST FIRST) */}
-            {salesSubView === 'panIndiaLogs' && !isMkt && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Newest First)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Date</th>
-                      <th style={{ padding: '10px' }}>Customer Name</th>
-                      <th style={{ padding: '10px' }}>Business Category</th>
-                      <th style={{ padding: '10px' }}>Material</th>
-                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
-                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
-                      <th style={{ padding: '10px' }}>Billing Unit</th>
-                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
-                      <th style={{ padding: '10px' }}>Location</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {livePanIndiaSales.length > 0 ? (
-                      livePanIndiaSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px' }}>{item.date}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
-                          <td style={{ padding: '10px' }}>{item.category}</td>
-                          <td style={{ padding: '10px' }}>{item.material}</td>
-                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
-                          <td style={{ padding: '10px' }}>{item.billingUnit}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.location}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('panIndia') }}>{salesEmptyMessage('PAN India sales records', 'panIndia')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-
-            {salesSubView === 'raipurZnLogs' && !isZincOrPiyali && (
+            {/* Full users – ZN Logs */}
+            {!isMkt && salesSubView === 'raipurZnLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
@@ -836,7 +949,8 @@ function App() {
               </section>
             )}
 
-            {salesSubView === 'raipurPbLogs' && !isZincOrPiyali && (
+            {/* Full users – PB Logs */}
+            {!isMkt && salesSubView === 'raipurPbLogs' && (
               <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Newest First)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
@@ -869,90 +983,49 @@ function App() {
                 </table>
               </section>
             )}
-
-            {/* EXTERNAL GOOGLE FORMS CARDS */}
-            {salesSubView === 'panIndiaForm' && !isMkt && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 PAN India Despatch Submission Form</h3>
-                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
-                <a 
-                  href={PAN_INDIA_FORM_URL} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
-                >
-                  Open PAN India Form in New Tab ↗
-                </a>
-              </section>
-            )}
-
-            {salesSubView === 'raipurForm' && !isZincOrPiyali && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 Raipur Despatch Submission Form</h3>
-                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab to prevent embedding blocks.</p>
-                <a 
-                  href={RAIPUR_FORM_URL} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
-                >
-                  Open Raipur Form in New Tab ↗
-                </a>
-              </section>
-            )}
           </div>
         )}
 
-        {activeModule === 'hr' && !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR') && (
+        {/* ===================== HR (LIVE FROM JOINING KIT SHEET) ===================== */}
+        {activeModule === 'hr' && canSeeHr && (
           <div>
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>HR Candidate Onboarding & Joining Entry</h3>
-              <form onSubmit={handleAddCandidate} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Candidate ID</label>
-                  <input type="text" value={newCandidateId} onChange={(e) => setNewCandidateId(e.target.value)} placeholder="e.g. EMP-2026-02" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Candidate Name</label>
-                  <input type="text" value={newCandidateName} onChange={(e) => setNewCandidateName(e.target.value)} placeholder="e.g. Priya Sen" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Department</label>
-                  <select value={newDept} onChange={(e) => setNewDept(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Production">Production</option>
-                    <option value="Accounts">Accounts</option>
-                    <option value="HR">HR</option>
-                    <option value="Quality Control">Quality Control</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Designation</label>
-                  <input type="text" value={newDesignation} onChange={(e) => setNewDesignation(e.target.value)} placeholder="e.g. Shift In-charge" required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Joining Date</label>
-                  <input type="date" value={newJoiningDate} onChange={(e) => setNewJoiningDate(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Onboarding Status</label>
-                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <option value="Verification Pending">Verification Pending</option>
-                    <option value="Verified & Kit Dispatched">Verified & Kit Dispatched</option>
-                    <option value="Onboarding Completed">Onboarding Completed</option>
-                  </select>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px' }}>
-                    Register New Employee Joining
+            <div className="sales-metric-grid">
+              <div className="sales-metric-card" style={{ borderLeftColor: '#7c3aed' }}>
+                <h4>Total Candidates</h4>
+                <div className="metric-val">{hrTotal}</div>
+                <div className="metric-sub">Candidate Master</div>
+              </div>
+              <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
+                <h4>Forms Submitted</h4>
+                <div className="metric-val">{hrSubmitted}</div>
+                <div className="metric-sub">{hrDocuments.length} documents uploaded</div>
+              </div>
+              <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
+                <h4>Pending</h4>
+                <div className="metric-val">{hrPending}</div>
+                <div className="metric-sub">Awaiting joining form</div>
+              </div>
+            </div>
+
+            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', overflowX: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                <h3 style={{ margin: 0, color: '#1e293b', fontSize: '16px' }}>HR Employee Joining & Onboarding Master (Live from Google Sheet)</h3>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <input
+                    value={hrSearch}
+                    onChange={(e) => setHrSearch(e.target.value)}
+                    placeholder="Search name / ID / dept..."
+                    style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', minWidth: '220px' }}
+                  />
+                  <button
+                    onClick={() => setHrReloadKey(k => k + 1)}
+                    style={{ padding: '8px 14px', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                  >
+                    ↻ Refresh
                   </button>
                 </div>
-              </form>
-            </section>
-
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-              <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>HR Employee Joining & Onboarding Master</h3>
-              <p style={{ color: '#475569', marginBottom: '15px', fontSize: '13px' }}>Track candidate submissions, document verification registers, and onboarding kits.</p>
-              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '950px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
                     <th style={{ padding: '10px' }}>ID</th>
@@ -960,33 +1033,94 @@ function App() {
                     <th style={{ padding: '10px' }}>Dept</th>
                     <th style={{ padding: '10px' }}>Designation</th>
                     <th style={{ padding: '10px' }}>Joining Date</th>
-                    <th style={{ padding: '10px' }}>Status</th>
+                    <th style={{ padding: '10px' }}>Email Status</th>
+                    <th style={{ padding: '10px' }}>Form</th>
+                    <th style={{ padding: '10px' }}>Submitted On</th>
+                    <th style={{ padding: '10px' }}>HR Verification</th>
+                    <th style={{ padding: '10px' }}>Docs Folder</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {joiningMaster.map(emp => (
-                    <tr key={emp.id} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                      <td style={{ padding: '10px', fontWeight: 'bold' }}>{emp.candidateId}</td>
-                      <td style={{ padding: '10px' }}>{emp.name}</td>
-                      <td style={{ padding: '10px' }}>{emp.dept}</td>
-                      <td style={{ padding: '10px' }}>{emp.designation}</td>
-                      <td style={{ padding: '10px' }}>{emp.joiningDate}</td>
-                      <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{emp.status}</td>
+                  {hrFiltered.length > 0 ? (
+                    hrFiltered.map((c, idx) => (
+                      <tr key={c.candidateId || idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                        <td style={{ padding: '10px', fontWeight: 'bold' }}>{c.candidateId || '—'}</td>
+                        <td style={{ padding: '10px' }}>{c.candidateName}</td>
+                        <td style={{ padding: '10px' }}>{c.department}</td>
+                        <td style={{ padding: '10px' }}>{c.designation}</td>
+                        <td style={{ padding: '10px' }}>{c.joiningDate}</td>
+                        <td style={{ padding: '10px' }}>
+                          {c.emailStatus || '—'}{c.emailSentCount ? ` (${c.emailSentCount})` : ''}
+                        </td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: c.formStatus === 'Submitted' ? '#16a34a' : '#ea580c' }}>
+                          {c.formStatus || 'Pending'}
+                        </td>
+                        <td style={{ padding: '10px' }}>{c.submissionDate || '—'}</td>
+                        <td style={{ padding: '10px', fontWeight: 'bold', color: '#2563eb' }}>{c.hrVerificationStatus || '—'}</td>
+                        <td style={{ padding: '10px' }}>
+                          {c.documentFolderLink
+                            ? <a href={c.documentFolderLink} target="_blank" rel="noreferrer">Open ↗</a>
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="10" style={{ padding: '20px', textAlign: 'center', color: hrError ? '#dc2626' : '#64748b' }}>
+                        {hrError || (hrLoaded ? 'No candidates found.' : 'Loading HR data...')}
+                      </td>
                     </tr>
-                  ))}
+                  )}
+                </tbody>
+              </table>
+            </section>
+
+            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+              <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📁 Document Register</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
+                    <th style={{ padding: '10px' }}>Candidate</th>
+                    <th style={{ padding: '10px' }}>Document Type</th>
+                    <th style={{ padding: '10px' }}>File</th>
+                    <th style={{ padding: '10px' }}>Uploaded</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {hrDocuments.length > 0 ? (
+                    hrDocuments.map((d, idx) => (
+                      <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
+                        <td style={{ padding: '10px' }}>{d.candidateName || d.candidateId}</td>
+                        <td style={{ padding: '10px' }}>{d.documentType}</td>
+                        <td style={{ padding: '10px' }}>
+                          {d.driveFileUrl
+                            ? <a href={d.driveFileUrl} target="_blank" rel="noreferrer">{d.fileName || 'View'} ↗</a>
+                            : d.fileName}
+                        </td>
+                        <td style={{ padding: '10px' }}>{d.uploadedAt}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" style={{ padding: '15px', textAlign: 'center', color: hrError ? '#dc2626' : '#64748b' }}>
+                        {hrError || (hrLoaded ? 'No documents yet.' : 'Loading...')}
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </section>
           </div>
         )}
 
+        {/* ===================== SHOWCASE ===================== */}
         {activeModule === 'showcase' && !isRestrictedAccounts && (
           <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <h2 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '20px' }}>AMBICA-HIND ✦ Plant Gallery & Leadership</h2>
               <p style={{ color: '#64748b', fontSize: '13px' }}>Manufacturing facilities & leadership from <a href="https://www.ambahind.com" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 'bold' }}>ambahind.com</a>.</p>
             </div>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                 <div style={{ height: '160px', background: '#cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px', border: '2px dashed #94a3b8' }}>

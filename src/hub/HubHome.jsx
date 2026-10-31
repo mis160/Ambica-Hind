@@ -3,12 +3,11 @@ import './Hub.css';
 import { fetchHub, postHub, hubConnected, isSafeUrl, PRODUCTION_TAGS } from './hubApi.js';
 
 const NOTICE_CATEGORIES = ['General', 'Urgent', 'Holiday', 'Safety', 'Production', 'HR', 'Accounts', 'Sales'];
-const NOTICE_EDITORS = ['Admin', 'HR']; // who sees the "Post a notice" button
-const RATE_EDITORS = ['Admin', 'Accounts']; // who sees the "Update rates" button
+const NOTICE_EDITORS = ['Admin', 'HR'];
+const RATE_EDITORS = ['Admin', 'Accounts'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DEFAULT_MATERIALS = ['Zinc', 'Zinc Oxide', 'Lead (PB)', 'GI Wire', 'Wire Rod'];
 
-// "2026-10-15" or "2026-10-15T10:42:00"  ->  "15 Oct 2026"
 function fmtDate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || '');
   if (!m) return s || '';
@@ -37,12 +36,14 @@ export default function HubHome({ userRole, userEmail }) {
   const canPostNotice = NOTICE_EDITORS.includes(userRole);
   const canEditRates = RATE_EDITORS.includes(userRole);
 
+  const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
+  const isMkt = userEmail === 'mkt@ambahind.com';
+
   const [data, setData] = useState({ notices: [], rates: [], links: [] });
   const [loading, setLoading] = useState(connected);
   const [error, setError] = useState('');
   const [updatedAt, setUpdatedAt] = useState('');
 
-  // Editor passcode is only kept for this browser tab, never in the app code
   const [passcode, setPasscode] = useState(() => {
     try {
       return sessionStorage.getItem('hubPasscode') || '';
@@ -73,6 +74,7 @@ export default function HubHome({ userRole, userEmail }) {
   const [rateRows, setRateRows] = useState([]);
   const [rBusy, setRBusy] = useState(false);
   const [rError, setRError] = useState('');
+  const [fetchingZinc, setFetchingZinc] = useState(false);
 
   const load = useCallback(
     async (silent) => {
@@ -83,7 +85,12 @@ export default function HubHome({ userRole, userEmail }) {
         setData(d);
         setError('');
         setUpdatedAt(
-          new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date())
+          new Intl.DateTimeFormat('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }).format(new Date())
         );
       } catch (err) {
         setError('Could not load the latest notices and rates (' + (err && err.message ? err.message : err) + ').');
@@ -94,7 +101,6 @@ export default function HubHome({ userRole, userEmail }) {
     [connected]
   );
 
-  // Load now, then refresh every minute while the page is open
   useEffect(() => {
     if (!connected) return undefined;
     load(false);
@@ -164,11 +170,69 @@ export default function HubHome({ userRole, userEmail }) {
     setRError('');
     setShowRateForm(true);
   };
+
   const updateRateRow = (i, field, value) => {
     setRateRows((rows) => rows.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
   };
+
   const addRateRow = () => setRateRows((rows) => [...rows, { material: '', rate: '', unit: '₹/KG' }]);
+
   const removeRateRow = (i) => setRateRows((rows) => rows.filter((_, idx) => idx !== i));
+
+  // ===== Fetch Market Zinc =====
+  const fetchMarketZinc = async () => {
+    setFetchingZinc(true);
+    setRError('');
+    try {
+      const { HUB_API_URL } = await import('./hubConfig.js');
+
+      if (!HUB_API_URL || !HUB_API_URL.startsWith('https://script.google.com/')) {
+        throw new Error('Hub URL not configured');
+      }
+
+      const url = `${HUB_API_URL}?action=marketZinc&_=${Date.now()}`;
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (!json || json.error || json.ok === false) {
+        throw new Error(json?.error || 'Could not get market price');
+      }
+
+      const marketRate = Number(json.rate);
+      if (!Number.isFinite(marketRate) || marketRate <= 0) {
+        throw new Error('Invalid market rate received');
+      }
+
+      // Fill the Zinc row (not Zinc Oxide)
+      setRateRows((rows) => {
+        const next = [...rows];
+        const idx = next.findIndex(
+          (r) =>
+            (r.material || '').toLowerCase().includes('zinc') &&
+            !(r.material || '').toLowerCase().includes('oxide')
+        );
+
+        if (idx >= 0) {
+          next[idx] = {
+            ...next[idx],
+            rate: String(marketRate),
+            unit: json.unit || '₹/KG'
+          };
+        } else {
+          next.unshift({
+            material: 'Zinc',
+            rate: String(marketRate),
+            unit: json.unit || '₹/KG'
+          });
+        }
+        return next;
+      });
+    } catch (err) {
+      setRError('Market fetch failed: ' + (err && err.message ? err.message : err));
+    } finally {
+      setFetchingZinc(false);
+    }
+  };
 
   const submitRates = async (e) => {
     e.preventDefault();
@@ -196,7 +260,11 @@ export default function HubHome({ userRole, userEmail }) {
         passcode,
         date: todayIST(),
         updatedBy: userEmail,
-        rates: filled.map((r) => ({ material: r.material.trim(), rate: Number(r.rate), unit: r.unit.trim() || '₹/KG' }))
+        rates: filled.map((r) => ({
+          material: r.material.trim(),
+          rate: Number(r.rate),
+          unit: r.unit.trim() || '₹/KG'
+        }))
       });
       rememberPasscode(passcode);
       setShowRateForm(false);
@@ -208,7 +276,6 @@ export default function HubHome({ userRole, userEmail }) {
     }
   };
 
-  // ---------- not connected yet ----------
   if (!connected) {
     return (
       <div className="hub-root">
@@ -226,10 +293,16 @@ export default function HubHome({ userRole, userEmail }) {
   }
 
   const latestRateDate = data.rates.reduce((best, r) => (r.date && r.date > best ? r.date : best), '');
-  // Production forms (Category ZNO / WD / GI / Production) are shown in the Production tab instead
-  const links = data.links.filter(
-    (l) => isSafeUrl(l.url) && !PRODUCTION_TAGS.includes(String(l.category || '').trim().toUpperCase())
-  );
+
+  const links = data.links.filter((l) => {
+    if (!isSafeUrl(l.url)) return false;
+    if (PRODUCTION_TAGS.includes(String(l.category || '').trim().toUpperCase())) return false;
+
+    const title = (l.title || '').toLowerCase();
+    if (isZincOrPiyali) return title.includes('pan india');
+    if (isMkt) return title.includes('raipur');
+    return true;
+  });
 
   return (
     <div className="hub-root">
@@ -246,7 +319,7 @@ export default function HubHome({ userRole, userEmail }) {
       {error && <div className="hub-alert">{error}</div>}
 
       <div className="hub-grid">
-        {/* ---------- NOTICE BOARD ---------- */}
+        {/* NOTICE BOARD */}
         <section className="hub-card accent-blue">
           <div className="hub-card-head">
             <h3>📢 Notice board</h3>
@@ -261,11 +334,23 @@ export default function HubHome({ userRole, userEmail }) {
             <form className="hub-form" onSubmit={submitNotice}>
               <label>
                 Title
-                <input type="text" value={nTitle} maxLength={120} onChange={(e) => setNTitle(e.target.value)} placeholder="e.g. Plant shutdown on Sunday" />
+                <input
+                  type="text"
+                  value={nTitle}
+                  maxLength={120}
+                  onChange={(e) => setNTitle(e.target.value)}
+                  placeholder="e.g. Plant shutdown on Sunday"
+                />
               </label>
               <label>
                 Message (optional)
-                <textarea rows={3} value={nMessage} maxLength={1500} onChange={(e) => setNMessage(e.target.value)} placeholder="Details for everyone" />
+                <textarea
+                  rows={3}
+                  value={nMessage}
+                  maxLength={1500}
+                  onChange={(e) => setNMessage(e.target.value)}
+                  placeholder="Details for everyone"
+                />
               </label>
               <div className="hub-form-row">
                 <label>
@@ -289,7 +374,13 @@ export default function HubHome({ userRole, userEmail }) {
               </label>
               <label>
                 Editor passcode
-                <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} autoComplete="off" placeholder="Ask your administrator" />
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  autoComplete="off"
+                  placeholder="Ask your administrator"
+                />
               </label>
               {nError && <div className="hub-alert">{nError}</div>}
               <button type="submit" className="hub-btn" disabled={nBusy}>
@@ -303,7 +394,14 @@ export default function HubHome({ userRole, userEmail }) {
           ) : data.notices.length ? (
             <ul className="hub-notices">
               {data.notices.map((n) => (
-                <li key={n.id} className={'hub-notice' + (n.pinned ? ' is-pinned' : '') + (n.category === 'Urgent' ? ' is-urgent' : '')}>
+                <li
+                  key={n.id}
+                  className={
+                    'hub-notice' +
+                    (n.pinned ? ' is-pinned' : '') +
+                    (n.category === 'Urgent' ? ' is-urgent' : '')
+                  }
+                >
                   <div className="hub-notice-head">
                     <span className="hub-pill">{n.category}</span>
                     {n.pinned && <span className="hub-pin">📌 Pinned</span>}
@@ -327,12 +425,16 @@ export default function HubHome({ userRole, userEmail }) {
           )}
         </section>
 
-        {/* ---------- DAILY RATES ---------- */}
+        {/* DAILY RATES */}
         <section className="hub-card accent-green">
           <div className="hub-card-head">
             <h3>💹 Daily rates</h3>
             {canEditRates && (
-              <button type="button" className="hub-btn" onClick={() => (showRateForm ? setShowRateForm(false) : openRateForm())}>
+              <button
+                type="button"
+                className="hub-btn"
+                onClick={() => (showRateForm ? setShowRateForm(false) : openRateForm())}
+              >
                 {showRateForm ? 'Close' : 'Update rates'}
               </button>
             )}
@@ -340,26 +442,77 @@ export default function HubHome({ userRole, userEmail }) {
 
           {showRateForm && canEditRates && (
             <form className="hub-form" onSubmit={submitRates}>
+              <div style={{ marginBottom: '12px' }}>
+                <button
+                  type="button"
+                  className="hub-btn secondary"
+                  onClick={fetchMarketZinc}
+                  disabled={fetchingZinc}
+                  style={{ fontSize: '13px' }}
+                >
+                  {fetchingZinc ? 'Fetching market price…' : '📈 Fetch Market Zinc'}
+                </button>
+                <small style={{ display: 'block', marginTop: '4px', color: '#64748b' }}>
+                  Fills the Zinc row with approximate LME-based market rate (₹/kg). You can still edit it.
+                </small>
+              </div>
+
               <div className="hub-rate-rows">
                 {rateRows.map((r, i) => (
                   <div className="hub-rate-row" key={i}>
-                    <input type="text" value={r.material} onChange={(e) => updateRateRow(i, 'material', e.target.value)} placeholder="Material" aria-label="Material" />
-                    <input type="number" inputMode="decimal" step="any" min="0" value={r.rate} onChange={(e) => updateRateRow(i, 'rate', e.target.value)} placeholder="Rate" aria-label="Rate" />
-                    <input type="text" value={r.unit} onChange={(e) => updateRateRow(i, 'unit', e.target.value)} placeholder="Unit" aria-label="Unit" />
-                    <button type="button" className="hub-link-btn" onClick={() => removeRateRow(i)} aria-label="Remove this row">
+                    <input
+                      type="text"
+                      value={r.material}
+                      onChange={(e) => updateRateRow(i, 'material', e.target.value)}
+                      placeholder="Material"
+                      aria-label="Material"
+                    />
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      min="0"
+                      value={r.rate}
+                      onChange={(e) => updateRateRow(i, 'rate', e.target.value)}
+                      placeholder="Rate"
+                      aria-label="Rate"
+                    />
+                    <input
+                      type="text"
+                      value={r.unit}
+                      onChange={(e) => updateRateRow(i, 'unit', e.target.value)}
+                      placeholder="Unit"
+                      aria-label="Unit"
+                    />
+                    <button
+                      type="button"
+                      className="hub-link-btn"
+                      onClick={() => removeRateRow(i)}
+                      aria-label="Remove this row"
+                    >
                       ✕
                     </button>
                   </div>
                 ))}
               </div>
+
               <button type="button" className="hub-btn secondary" onClick={addRateRow}>
                 + Add a material
               </button>
+
               <label>
                 Editor passcode
-                <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} autoComplete="off" placeholder="Ask your administrator" />
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  autoComplete="off"
+                  placeholder="Ask your administrator"
+                />
               </label>
+
               {rError && <div className="hub-alert">{rError}</div>}
+
               <button type="submit" className="hub-btn" disabled={rBusy}>
                 {rBusy ? 'Saving…' : "Save today's rates"}
               </button>
@@ -407,7 +560,7 @@ export default function HubHome({ userRole, userEmail }) {
         </section>
       </div>
 
-      {/* ---------- QUICK LINKS ---------- */}
+      {/* QUICK LINKS */}
       <section className="hub-card accent-purple">
         <div className="hub-card-head">
           <h3>🔗 Quick links &amp; documents</h3>

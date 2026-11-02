@@ -11,6 +11,7 @@ import useFestival from './festive/useFestival.js';
 import WireDashboard from './wire/WireDashboard.jsx';
 import ProductionLinks from './hub/ProductionLinks.jsx';
 import ZnoOps from './zno/ZnoOps.jsx';
+import SalesZone from './sales/SalesZone.jsx';
 
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
@@ -55,6 +56,9 @@ const HR_API_URL = "https://script.google.com/macros/s/AKfycbxcl3BNhQ56I46erm-_O
 const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec";
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
 
+const panelStyle = { background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' };
+const thStyle = { padding: '10px' };
+
 function App() {
   const festival = useFestival();
 
@@ -81,14 +85,6 @@ function App() {
     return 'Zinc Oxide (ZNO)';
   });
   const [znoSubView, setZnoSubView] = useState('crucible');
-
-  // Sales Sub-view state (used inside each major sales tab)
-  const [salesSubView, setSalesSubView] = useState(() => {
-    const email = localStorage.getItem('userEmail');
-    if (email === 'mkt@ambahind.com') return 'raipurForm';
-    if (email === 'piyali@ambahind.com' || email === 'zincoxide@ambahind.com') return 'panIndiaForm';
-    return 'panIndiaDash';
-  });
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
@@ -218,35 +214,6 @@ function App() {
   };
   const emptyColor = loadError ? '#dc2626' : '#64748b';
 
-  const salesEmptyMessage = (label, source) => {
-    if (salesErrors[source]) return salesErrors[source];
-    if (salesLoaded) return 'No ' + label + ' found.';
-    return 'Loading ' + label + '...';
-  };
-  const salesEmptyColor = (source) => (salesErrors[source] ? '#dc2626' : '#64748b');
-
-  const getTopCustomers = (salesArr, limit = 10) => {
-    const map = {};
-    salesArr.forEach(s => {
-      const name = s.customer || 'Unknown';
-      const q = Number(s.qty) || 0;
-      map[name] = (map[name] || 0) + q;
-    });
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit);
-  };
-
-  const getLocationBreakdown = (salesArr) => {
-    const map = {};
-    salesArr.forEach(s => {
-      const loc = s.location || 'Kolkata';
-      const q = Number(s.qty) || 0;
-      map[loc] = (map[loc] || 0) + q;
-    });
-    return Object.entries(map).sort((a, b) => b[1] - a[1]);
-  };
-
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
       setSelectedHolidayInfo(COMPANY_HOLIDAYS_2026[selectedDate]);
@@ -302,16 +269,7 @@ function App() {
       localStorage.setItem('userAvatar', avatarUrl);
 
       const initialModule = matchedUser.email === 'costing@ambahind.com' ? 'production' : 'home';
-
-      const initialSalesView =
-        matchedUser.email === 'mkt@ambahind.com'
-          ? 'raipurForm'
-          : matchedUser.email === 'piyali@ambahind.com' || matchedUser.email === 'zincoxide@ambahind.com'
-            ? 'panIndiaForm'
-            : 'panIndiaDash';
-
       setActiveModule(initialModule);
-      setSalesSubView(initialSalesView);
       localStorage.setItem('activeModule', initialModule);
 
       setError('');
@@ -454,17 +412,12 @@ function App() {
             <button onClick={() => setActiveModule('production')} style={navStyle('production', '#ea580c')}>Production & Despatch</button>
           )}
 
-          {/* Separate tabs */}
           {canSeePanIndia && (
-            <button onClick={() => { setActiveModule('panIndia'); setSalesSubView(isZincOrPiyali ? 'panIndiaForm' : 'panIndiaDash'); }} style={navStyle('panIndia', '#16a34a')}>
-              🌐 PAN India
-            </button>
+            <button onClick={() => setActiveModule('panIndia')} style={navStyle('panIndia', '#16a34a')}>🌐 PAN India</button>
           )}
 
           {canSeeRaipur && (
-            <button onClick={() => { setActiveModule('raipur'); setSalesSubView(isMkt ? 'raipurForm' : 'raipurZnDash'); }} style={navStyle('raipur', '#0d9488')}>
-              🏭 Raipur
-            </button>
+            <button onClick={() => setActiveModule('raipur')} style={navStyle('raipur', '#0d9488')}>🏭 Raipur</button>
           )}
 
           {canSeeHr && (
@@ -485,7 +438,7 @@ function App() {
         {/* ===================== PRODUCTION ===================== */}
         {activeModule === 'production' && canSeeProduction && (
           <div>
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
+            <section style={{ ...panelStyle, marginBottom: '20px' }}>
               <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Plant Production & Despatch Filter</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                 <div>
@@ -527,18 +480,18 @@ function App() {
             <ProductionLinks unit={prodUnit} />
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'crucible' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+              <section style={{ ...panelStyle, overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🔥 Crucible Life & History Tracker (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Unit</th>
-                      <th style={{ padding: '10px' }}>Status</th>
-                      <th style={{ padding: '10px' }}>Active Crucible ID</th>
-                      <th style={{ padding: '10px' }}>Running Since</th>
-                      <th style={{ padding: '10px' }}>Days in Service</th>
-                      <th style={{ padding: '10px' }}>Oxide to Date (KG)</th>
-                      <th style={{ padding: '10px' }}>Recovery %</th>
+                      <th style={thStyle}>Unit</th>
+                      <th style={thStyle}>Status</th>
+                      <th style={thStyle}>Active Crucible ID</th>
+                      <th style={thStyle}>Running Since</th>
+                      <th style={thStyle}>Days in Service</th>
+                      <th style={thStyle}>Oxide to Date (KG)</th>
+                      <th style={thStyle}>Recovery %</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -563,16 +516,16 @@ function App() {
             )}
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'monthlyCosting' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+              <section style={{ ...panelStyle, overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📊 P5 & P7 All Costing Month Wise (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Month</th>
-                      <th style={{ padding: '10px' }}>Dross (KG)</th>
-                      <th style={{ padding: '10px' }}>Oxide (KG)</th>
-                      <th style={{ padding: '10px' }}>Total Cost (₹)</th>
-                      <th style={{ padding: '10px' }}>Cost / KG (₹)</th>
+                      <th style={thStyle}>Month</th>
+                      <th style={thStyle}>Dross (KG)</th>
+                      <th style={thStyle}>Oxide (KG)</th>
+                      <th style={thStyle}>Total Cost (₹)</th>
+                      <th style={thStyle}>Cost / KG (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -595,15 +548,15 @@ function App() {
             )}
 
             {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'productionDash' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+              <section style={{ ...panelStyle, overflowX: 'auto' }}>
                 <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📈 Executive Production Dashboard (Live from Google Sheet)</h3>
                 <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Month</th>
-                      <th style={{ padding: '10px' }}>Oxide Produced (KG)</th>
-                      <th style={{ padding: '10px' }}>Total Cost (₹)</th>
-                      <th style={{ padding: '10px' }}>Net Cost / KG (₹)</th>
+                      <th style={thStyle}>Month</th>
+                      <th style={thStyle}>Oxide Produced (KG)</th>
+                      <th style={thStyle}>Total Cost (₹)</th>
+                      <th style={thStyle}>Net Cost / KG (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -632,358 +585,31 @@ function App() {
           </div>
         )}
 
-        {/* ===================== PAN INDIA TAB ===================== */}
+        {/* ===================== PAN INDIA (month-wise dashboard) ===================== */}
         {activeModule === 'panIndia' && canSeePanIndia && (
-          <div>
-            {/* Sub-view selector – only for full users */}
-            {!isZincOrPiyali && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>PAN India — View Selector</h3>
-                <select
-                  value={salesSubView}
-                  onChange={(e) => setSalesSubView(e.target.value)}
-                  style={{ width: '100%', maxWidth: '420px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}
-                >
-                  <option value="panIndiaDash">📊 Executive Dashboard & Top 10</option>
-                  <option value="panIndiaLogs">🌐 Full Despatch Records (Newest First)</option>
-                  <option value="panIndiaForm">📝 Submit Despatch Form</option>
-                </select>
-              </section>
-            )}
-
-            {/* Restricted users (piyali / zincoxide) only see the form */}
-            {(isZincOrPiyali || salesSubView === 'panIndiaForm') && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 PAN India Despatch Submission Form</h3>
-                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab.</p>
-                <a
-                  href={PAN_INDIA_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#2563eb', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
-                >
-                  Open PAN India Form in New Tab ↗
-                </a>
-              </section>
-            )}
-
-            {/* Full users – Dashboard */}
-            {!isZincOrPiyali && salesSubView === 'panIndiaDash' && (
-              <div>
-                <div className="sales-metric-grid">
-                  <div className="sales-metric-card">
-                    <h4>Total PAN India Entries</h4>
-                    <div className="metric-val">{livePanIndiaSales.length} Records</div>
-                    <div className="metric-sub">Kolkata Zone / Direct Dispatch</div>
-                  </div>
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
-                    <h4>Total Qty Despatched</h4>
-                    <div className="metric-val">{(livePanIndiaSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
-                    <div className="metric-sub">Cumulative tonnage</div>
-                  </div>
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
-                    <h4>Total Sales Value</h4>
-                    <div className="metric-val">₹{(livePanIndiaSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
-                    <div className="metric-sub">Total billing value</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '20px' }}>
-                  <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                    <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 PAN India — Top 10 Customers</h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
-                      <thead>
-                        <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
-                          <th style={{ padding: '8px' }}>Customer Name</th>
-                          <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getTopCustomers(livePanIndiaSales, 10).length > 0 ? (
-                          getTopCustomers(livePanIndiaSales, 10).map(([cust, q], idx) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
-                              <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
-                              <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No customer data available.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </section>
-
-                  <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                    <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>📍 PAN India — Zone / Location Breakdown</h3>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
-                      <thead>
-                        <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
-                          <th style={{ padding: '8px' }}>Location / Zone</th>
-                          <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {getLocationBreakdown(livePanIndiaSales).length > 0 ? (
-                          getLocationBreakdown(livePanIndiaSales).map(([loc, q], idx) => (
-                            <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
-                              <td style={{ padding: '8px', fontWeight: 'bold' }}>{loc}</td>
-                              <td style={{ padding: '8px', textAlign: 'right', color: '#16a34a' }}>{q.toLocaleString()} KGS</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No location data available.</td></tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </section>
-                </div>
-              </div>
-            )}
-
-            {/* Full users – Logs */}
-            {!isZincOrPiyali && salesSubView === 'panIndiaLogs' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🌐 PAN India Zinc Sales Records (Newest First)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Date</th>
-                      <th style={{ padding: '10px' }}>Customer Name</th>
-                      <th style={{ padding: '10px' }}>Business Category</th>
-                      <th style={{ padding: '10px' }}>Material</th>
-                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
-                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
-                      <th style={{ padding: '10px' }}>Billing Unit</th>
-                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
-                      <th style={{ padding: '10px' }}>Location</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {livePanIndiaSales.length > 0 ? (
-                      livePanIndiaSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px' }}>{item.date}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
-                          <td style={{ padding: '10px' }}>{item.category}</td>
-                          <td style={{ padding: '10px' }}>{item.material}</td>
-                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
-                          <td style={{ padding: '10px' }}>{item.billingUnit}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.location}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="9" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('panIndia') }}>{salesEmptyMessage('PAN India sales records', 'panIndia')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-          </div>
+          <SalesZone
+            zone="panIndia"
+            accent="#16a34a"
+            formUrl={PAN_INDIA_FORM_URL}
+            formOnly={isZincOrPiyali}
+            panRows={livePanIndiaSales}
+            loaded={salesLoaded}
+            error={salesErrors.panIndia}
+          />
         )}
 
-        {/* ===================== RAIPUR TAB ===================== */}
+        {/* ===================== RAIPUR (month-wise dashboard) ===================== */}
         {activeModule === 'raipur' && canSeeRaipur && (
-          <div>
-            {/* Sub-view selector – only for full users */}
-            {!isMkt && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Raipur — View Selector</h3>
-                <select
-                  value={salesSubView}
-                  onChange={(e) => setSalesSubView(e.target.value)}
-                  style={{ width: '100%', maxWidth: '420px', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#e0f2fe', fontWeight: 'bold' }}
-                >
-                  <option value="raipurZnDash">📊 Raipur ZN — Executive Dashboard & Top 10</option>
-                  <option value="raipurZnLogs">🏭 Raipur Zone — Zinc (ZN) Records</option>
-                  <option value="raipurPbDash">📊 Raipur PB — Executive Dashboard & Top 10</option>
-                  <option value="raipurPbLogs">⚖️ Raipur Zone — Lead (PB) Records</option>
-                  <option value="raipurForm">📝 Submit Despatch Form</option>
-                </select>
-              </section>
-            )}
-
-            {/* Restricted user (mkt) only sees the form */}
-            {(isMkt || salesSubView === 'raipurForm') && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '30px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', textAlign: 'center' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '18px' }}>📝 Raipur Despatch Submission Form</h3>
-                <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>Google Apps Script forms open securely in a dedicated browser tab.</p>
-                <a
-                  href={RAIPUR_FORM_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: 'inline-block', padding: '12px 24px', backgroundColor: '#0d9488', color: '#fff', borderRadius: '6px', fontWeight: 'bold', textDecoration: 'none', fontSize: '14px' }}
-                >
-                  Open Raipur Form in New Tab ↗
-                </a>
-              </section>
-            )}
-
-            {/* Full users – ZN Dashboard */}
-            {!isMkt && salesSubView === 'raipurZnDash' && (
-              <div>
-                <div className="sales-metric-grid">
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#ea580c' }}>
-                    <h4>Raipur ZN Records</h4>
-                    <div className="metric-val">{liveRaipurZnSales.length} Entries</div>
-                    <div className="metric-sub">Zinc Despatch Department</div>
-                  </div>
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
-                    <h4>Total ZN Qty Despatched</h4>
-                    <div className="metric-val">{(liveRaipurZnSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
-                    <div className="metric-sub">Cumulative tonnage</div>
-                  </div>
-                  <div className="sales-metric-card">
-                    <h4>Total ZN Sales Value</h4>
-                    <div className="metric-val">₹{(liveRaipurZnSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
-                    <div className="metric-sub">Total billing value</div>
-                  </div>
-                </div>
-
-                <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                  <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 Raipur Zinc (ZN) — Top Customers</h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
-                    <thead>
-                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
-                        <th style={{ padding: '8px' }}>Customer Name</th>
-                        <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getTopCustomers(liveRaipurZnSales, 10).length > 0 ? (
-                        getTopCustomers(liveRaipurZnSales, 10).map(([cust, q], idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
-                            <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
-                            <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No Raipur ZN customer data available.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </section>
-              </div>
-            )}
-
-            {/* Full users – PB Dashboard */}
-            {!isMkt && salesSubView === 'raipurPbDash' && (
-              <div>
-                <div className="sales-metric-grid">
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#7c3aed' }}>
-                    <h4>Raipur Lead (PB) Records</h4>
-                    <div className="metric-val">{liveRaipurPbSales.length} Entries</div>
-                    <div className="metric-sub">Lead Despatch Department</div>
-                  </div>
-                  <div className="sales-metric-card" style={{ borderLeftColor: '#16a34a' }}>
-                    <h4>Total PB Qty Despatched</h4>
-                    <div className="metric-val">{(liveRaipurPbSales.reduce((acc, r) => acc + (Number(r.qty) || 0), 0) / 1000).toFixed(2)} MT</div>
-                    <div className="metric-sub">Cumulative tonnage</div>
-                  </div>
-                  <div className="sales-metric-card">
-                    <h4>Total PB Sales Value</h4>
-                    <div className="metric-val">₹{(liveRaipurPbSales.reduce((acc, r) => acc + (Number(r.value) || 0), 0) / 100000).toFixed(2)} Lakh</div>
-                    <div className="metric-sub">Total billing value</div>
-                  </div>
-                </div>
-
-                <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-                  <h3 style={{ margin: '0 0 12px 0', color: '#1e293b', fontSize: '15px' }}>🏆 Raipur Lead (PB) — Top Customers</h3>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}>
-                    <thead>
-                      <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '12px' }}>
-                        <th style={{ padding: '8px' }}>Customer Name</th>
-                        <th style={{ padding: '8px', textAlign: 'right' }}>Qty (KGS)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getTopCustomers(liveRaipurPbSales, 10).length > 0 ? (
-                        getTopCustomers(liveRaipurPbSales, 10).map(([cust, q], idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '12px' }}>
-                            <td style={{ padding: '8px', fontWeight: 'bold' }}>{idx + 1}. {cust}</td>
-                            <td style={{ padding: '8px', textAlign: 'right', color: '#2563eb' }}>{q.toLocaleString()} KGS</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr><td colSpan="2" style={{ padding: '15px', textAlign: 'center', color: '#64748b' }}>No Raipur PB customer data available.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </section>
-              </div>
-            )}
-
-            {/* Full users – ZN Logs */}
-            {!isMkt && salesSubView === 'raipurZnLogs' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🏭 Raipur Zone — Zinc (ZN) Sales Records (Newest First)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Date</th>
-                      <th style={{ padding: '10px' }}>Customer Name</th>
-                      <th style={{ padding: '10px' }}>Product</th>
-                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
-                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
-                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveRaipurZnSales.length > 0 ? (
-                      liveRaipurZnSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px' }}>{item.date}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
-                          <td style={{ padding: '10px' }}>{item.product}</td>
-                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('raipur') }}>{salesEmptyMessage('Raipur Zinc sales records', 'raipur')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-
-            {/* Full users – PB Logs */}
-            {!isMkt && salesSubView === 'raipurPbLogs' && (
-              <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>⚖️ Raipur Zone — Lead (PB) Sales Records (Newest First)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={{ padding: '10px' }}>Date</th>
-                      <th style={{ padding: '10px' }}>Customer Name</th>
-                      <th style={{ padding: '10px' }}>Product</th>
-                      <th style={{ padding: '10px' }}>Rate (₹/KG)</th>
-                      <th style={{ padding: '10px' }}>Qty (KGS)</th>
-                      <th style={{ padding: '10px' }}>Total Value (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveRaipurPbSales.length > 0 ? (
-                      liveRaipurPbSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px' }}>{item.date}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{item.customer}</td>
-                          <td style={{ padding: '10px' }}>{item.product}</td>
-                          <td style={{ padding: '10px' }}>₹{item.rate ? Number(item.rate).toFixed(2) : '0'}</td>
-                          <td style={{ padding: '10px' }}>{item.qty ? Number(item.qty).toLocaleString() : '0'} KGS</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold', color: '#16a34a' }}>₹{item.value ? Number(item.value).toLocaleString(undefined, {minimumFractionDigits: 2}) : '0'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: salesEmptyColor('raipur') }}>{salesEmptyMessage('Raipur Lead (PB) sales records', 'raipur')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-          </div>
+          <SalesZone
+            zone="raipur"
+            accent="#0d9488"
+            formUrl={RAIPUR_FORM_URL}
+            formOnly={isMkt}
+            znRows={liveRaipurZnSales}
+            pbRows={liveRaipurPbSales}
+            loaded={salesLoaded}
+            error={salesErrors.raipur}
+          />
         )}
 
         {/* ===================== HR (LIVE FROM JOINING KIT SHEET) ===================== */}
@@ -1007,7 +633,7 @@ function App() {
               </div>
             </div>
 
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', marginBottom: '20px', overflowX: 'auto' }}>
+            <section style={{ ...panelStyle, marginBottom: '20px', overflowX: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
                 <h3 style={{ margin: 0, color: '#1e293b', fontSize: '16px' }}>HR Employee Joining & Onboarding Master (Live from Google Sheet)</h3>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -1028,16 +654,16 @@ function App() {
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '950px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                    <th style={{ padding: '10px' }}>ID</th>
-                    <th style={{ padding: '10px' }}>Name</th>
-                    <th style={{ padding: '10px' }}>Dept</th>
-                    <th style={{ padding: '10px' }}>Designation</th>
-                    <th style={{ padding: '10px' }}>Joining Date</th>
-                    <th style={{ padding: '10px' }}>Email Status</th>
-                    <th style={{ padding: '10px' }}>Form</th>
-                    <th style={{ padding: '10px' }}>Submitted On</th>
-                    <th style={{ padding: '10px' }}>HR Verification</th>
-                    <th style={{ padding: '10px' }}>Docs Folder</th>
+                    <th style={thStyle}>ID</th>
+                    <th style={thStyle}>Name</th>
+                    <th style={thStyle}>Dept</th>
+                    <th style={thStyle}>Designation</th>
+                    <th style={thStyle}>Joining Date</th>
+                    <th style={thStyle}>Email Status</th>
+                    <th style={thStyle}>Form</th>
+                    <th style={thStyle}>Submitted On</th>
+                    <th style={thStyle}>HR Verification</th>
+                    <th style={thStyle}>Docs Folder</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1075,15 +701,15 @@ function App() {
               </table>
             </section>
 
-            <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', overflowX: 'auto' }}>
+            <section style={{ ...panelStyle, overflowX: 'auto' }}>
               <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📁 Document Register</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '700px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                    <th style={{ padding: '10px' }}>Candidate</th>
-                    <th style={{ padding: '10px' }}>Document Type</th>
-                    <th style={{ padding: '10px' }}>File</th>
-                    <th style={{ padding: '10px' }}>Uploaded</th>
+                    <th style={thStyle}>Candidate</th>
+                    <th style={thStyle}>Document Type</th>
+                    <th style={thStyle}>File</th>
+                    <th style={thStyle}>Uploaded</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1115,7 +741,7 @@ function App() {
 
         {/* ===================== SHOWCASE ===================== */}
         {activeModule === 'showcase' && !isRestrictedAccounts && (
-          <section style={{ background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+          <section style={{ ...panelStyle, borderRadius: '12px' }}>
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <h2 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '20px' }}>AMBICA-HIND ✦ Plant Gallery & Leadership</h2>
               <p style={{ color: '#64748b', fontSize: '13px' }}>Manufacturing facilities & leadership from <a href="https://www.ambahind.com" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 'bold' }}>ambahind.com</a>.</p>

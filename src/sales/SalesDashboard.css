@@ -52,7 +52,7 @@
   background: linear-gradient(90deg, #0f172a, #334155); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 .sd-sec small { font-weight: 500; opacity: 0.8; margin-left: 8px; }
-.sd-h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 800; color: #1e293b; }
+.sd-h4 { margin: 0 0 10px 0; font-size: 13px; font-weight: 800; color: #1e293b; text-align: left; }
 
 /* ----- KPI cards ----- */
 .sd-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; align-items: stretch; }
@@ -76,10 +76,14 @@
 .sd-tall { max-height: 560px; overflow-y: auto; }
 .sd-t { width: 100%; border-collapse: collapse; background: #fff; font-size: 12px; }
 .sd-t th {
-  background: #f1f5f9; color: #334155; text-align: left; padding: 8px; font-size: 11px;
-  white-space: nowrap; position: sticky; top: 0; z-index: 1;
+  background: #f1f5f9; color: #334155; text-align: left; padding: 8px 10px; font-size: 11px;
+  white-space: nowrap; vertical-align: middle; position: sticky; top: 0; z-index: 1;
 }
-.sd-t td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+.sd-t td {
+  padding: 8px 10px; border-bottom: 1px solid #e2e8f0; color: #1e293b;
+  text-align: left; vertical-align: middle; line-height: 1.3; white-space: nowrap;
+}
+.sd-t td.sd-wrap { white-space: normal; min-width: 180px; max-width: 320px; }
 .sd-t .r { text-align: right; font-variant-numeric: tabular-nums; }
 .sd-t .b { font-weight: 700; }
 .sd-t tr.sd-tot td { background: #f8fafc; font-weight: 800; border-top: 2px solid #94a3b8; }
@@ -95,9 +99,12 @@
 .sd-hl { background: #fef9c3 !important; }
 
 /* share bars */
-.sd-bar { position: relative; min-width: 90px; height: 16px; background: #e2e8f0; border-radius: 8px; overflow: hidden; }
-.sd-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; opacity: 0.85; }
-.sd-bar span { position: relative; font-size: 10px; font-weight: 800; color: #0f172a; padding-left: 6px; line-height: 16px; }
+.sd-bar { position: relative; display: block; min-width: 100px; height: 20px; background: #e2e8f0; border-radius: 10px; overflow: hidden; }
+.sd-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 10px; opacity: 0.85; }
+.sd-bar span {
+  position: absolute; inset: 0; display: flex; align-items: center; padding-left: 8px;
+  font-size: 11px; font-weight: 800; line-height: 1; color: #0f172a; text-shadow: 0 0 3px #fff;
+}
 
 /* ----- layout helpers ----- */
 .sd-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
@@ -124,3 +131,19 @@
   .sd-select { min-width: 0; width: 100%; }
   .sd-chart { gap: 2px; }
 }
+
+/* ---- hard overrides: win against global table/td/span rules in App.css / index.css ---- */
+.sd-root .sd-t { width: 100%; border-collapse: collapse; table-layout: auto; }
+.sd-root .sd-t th,
+.sd-root .sd-t td {
+  text-align: left !important;
+  vertical-align: middle !important;
+  line-height: 1.3 !important;
+  white-space: nowrap !important;
+  padding: 8px 10px !important;
+}
+.sd-root .sd-t th.r,
+.sd-root .sd-t td.r { text-align: right !important; }
+.sd-root .sd-t td.sd-wrap { white-space: normal !important; }
+.sd-root .sd-h4,
+.sd-root .sd-title { text-align: left !important; }

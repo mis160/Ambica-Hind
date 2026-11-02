@@ -13,12 +13,19 @@ const VIEWS = [
   { id: 'records', label: '📋 Records' }
 ];
 
-const Bar = ({ pct, color }) => (
-  <div className="sd-bar">
-    <i style={{ width: Math.max(0, Math.min(100, pct)) + '%', background: color }} />
-    <span>{pct >= 1 ? pct.toFixed(0) : pct > 0 ? '<1' : '0'}%</span>
-  </div>
-);
+const Bar = ({ pct, color }) => {
+  const p = Math.max(0, Math.min(100, pct));
+  const label = (p >= 1 ? p.toFixed(0) : p > 0 ? '<1' : '0') + '%';
+  // inline styles + divs so global app CSS (span/td rules) cannot distort the bar
+  return (
+    <div style={{ position: 'relative', height: 22, minWidth: 110, background: '#e2e8f0', borderRadius: 11, overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: p + '%', background: color, opacity: 0.85, borderRadius: 11 }} />
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0, padding: 0, fontSize: 11, fontWeight: 800, lineHeight: '22px', color: '#0f172a', textShadow: '0 0 3px #fff' }}>
+        {label}
+      </div>
+    </div>
+  );
+};
 
 const Kpi = ({ icon, label, value, sub, tone }) => (
   <div className="sd-kpi" style={{ '--tone': tone }}>
@@ -88,7 +95,7 @@ function TopTable({ title, rows, color, limit = 10 }) {
             {top.length === 0 && <tr><td colSpan="4" className="sd-empty">No customer data for this period.</td></tr>}
             {top.map((r, i) => (
               <tr key={r.name}>
-                <td className="b">{i + 1}. {r.name}</td>
+                <td className="b sd-wrap">{i + 1}. {r.name}</td>
                 <td className="r">{num(r.qty)}</td>
                 <td className="r">{num(r.value)}</td>
                 <td><Bar pct={total ? (r.qty / total) * 100 : 0} color={color} /></td>
@@ -305,7 +312,7 @@ export default function SalesDashboard({ title, subtitle, accent = '#16a34a', st
               {custList.length === 0 && <tr><td colSpan="7" className="sd-empty">No customers found.</td></tr>}
               {custList.map((c, i) => (
                 <tr key={c.name}>
-                  <td>{i + 1}</td><td className="b">{c.name}</td><td className="r">{c.entries}</td>
+                  <td>{i + 1}</td><td className="b sd-wrap">{c.name}</td><td className="r">{c.entries}</td>
                   <td className="r">{num(c.qty)}</td><td className="r">{num(c.value)}</td><td className="r">{num(c.rate)}</td>
                   <td><Bar pct={custTotalQty ? (c.qty / custTotalQty) * 100 : 0} color={accent} /></td>
                 </tr>
@@ -436,7 +443,7 @@ export default function SalesDashboard({ title, subtitle, accent = '#16a34a', st
             <tbody>
               {shown.length === 0 && <tr><td colSpan={cols.length} className="sd-empty">No records for this period.</td></tr>}
               {shown.map((r, i) => (
-                <tr key={i}>{cols.map((c) => <td key={c.h} className={(c.num ? 'r ' : '') + (c.bold ? 'b' : '')}>{c.get(r)}</td>)}</tr>
+                <tr key={i}>{cols.map((c) => <td key={c.h} className={(c.num ? 'r ' : '') + (c.bold ? (c.num ? 'b' : 'b sd-wrap') : '')}>{c.get(r)}</td>)}</tr>
               ))}
             </tbody>
           </table>

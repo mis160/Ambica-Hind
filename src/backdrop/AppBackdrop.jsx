@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Backdrop.css';
-
-// 1) All photos in src/assets/photos are picked up automatically.
-const photoModules = import.meta.glob('../assets/photos/*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
-
-// 2) The old slideshow pictures (src/assets/Plant*.jpg / png) now rotate in the background too.
-const plantModules = import.meta.glob('../assets/Plant*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
-
-// Merge both lists (duplicates removed)
-const PHOTOS = Array.from(
-  new Set([...Object.values(photoModules), ...Object.values(plantModules)].map((m) => m.default))
-);
+import { PHOTOS } from '../photos.js'; // every picture in src/assets/photos
 
 // Neutral shading only (black, no colour). Higher number = darker edges.
 // Set all three to 0 for completely plain pictures.

@@ -10,12 +10,10 @@ import useFestival from './festive/useFestival.js';
 import ProductionLinks from './hub/ProductionLinks.jsx';
 import ProductionZone from './production/ProductionZone.jsx';
 import SalesZone from './sales/SalesZone.jsx';
+import { PHOTOS } from './photos.js';
 
-// Plant pictures: still used by the login screen (the home page background list picks them up in AppBackdrop.jsx)
-const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
-const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
-  url: mod.default
-}));
+// One picture folder (src/assets/photos) feeds the background, the Showcase tab and the login slideshow
+const COMPANY_SLIDES = PHOTOS.map((url) => ({ url }));
 
 const COMPANY_HOLIDAYS_2026 = {
   '2026-01-23': { occasion: "Saraswati Puja / Netaji's Birthday", status: 'Fully Closed' },
@@ -69,6 +67,7 @@ function App() {
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('userAvatar') || '');
   const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'home');
   const [error, setError] = useState('');
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
@@ -332,7 +331,7 @@ function App() {
       <div className="left-sidebar-column">
         <div className="sidebar-card">
           <img src={ceoImage} alt="CEO" className="ceo-img" />
-          <h4>Leadership</h4>
+          <h4>CEO - SAURAV BUBNA</h4>
         </div>
 
         <div className="sidebar-card widget-box">
@@ -615,30 +614,37 @@ function App() {
               <p style={{ color: '#64748b', fontSize: '13px' }}>Manufacturing facilities & leadership from <a href="https://www.ambahind.com" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 'bold' }}>ambahind.com</a>.</p>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                <div style={{ height: '160px', background: '#cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px', border: '2px dashed #94a3b8' }}>
-                  🏭 Aerial Plant View
-                </div>
-                <h3 style={{ margin: '0 0 6px 0', color: '#1e293b', fontSize: '16px' }}>Advanced Industrial Infrastructure</h3>
-                <p style={{ color: '#475569', lineHeight: '1.5', fontSize: '13px' }}>Our expansive manufacturing units house state-of-the-art block drawing lines and high-capacity furnaces.</p>
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-                <img src={ceoImage} alt="CEO" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #2563eb', margin: '0 auto 10px auto', display: 'block' }} />
-                <h4 style={{ margin: '0 0 3px 0', color: '#1e293b', fontSize: '16px' }}>Executive Leadership</h4>
-                <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 'bold', margin: '0 0 8px 0' }}>Ambica-Hind Group</p>
-                <p style={{ color: '#475569', lineHeight: '1.5', fontSize: '13px', textAlign: 'left' }}>Guided by experienced leadership, expanding our footprint in non-ferrous and wire manufacturing.</p>
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                <div style={{ height: '160px', background: '#cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#334155', fontWeight: 'bold', fontSize: '14px', marginBottom: '12px', border: '2px dashed #94a3b8' }}>
-                  👥 Plant Operations & Team
-                </div>
-                <h3 style={{ margin: '0 0 6px 0', color: '#1e293b', fontSize: '16px' }}>Skilled Workforce & Safety Standards</h3>
-                <p style={{ color: '#475569', lineHeight: '1.5', fontSize: '13px' }}>Dedicated team of engineers, operators, and safety specialists maintaining rigorous daily shift protocols.</p>
-              </div>
+            <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '10px', border: '1px solid #e2e8f0', textAlign: 'center', marginBottom: '20px' }}>
+              <img src={ceoImage} alt="CEO" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #2563eb', margin: '0 auto 10px auto', display: 'block' }} />
+              <h4 style={{ margin: '0 0 3px 0', color: '#1e293b', fontSize: '16px' }}>CEO - SAURAV BUBNA</h4>
+              <p style={{ fontSize: '12px', color: '#2563eb', fontWeight: 'bold', margin: '0 0 8px 0' }}>Ambica-Hind Group</p>
+              <p style={{ color: '#475569', lineHeight: '1.5', fontSize: '13px', textAlign: 'left' }}>Guided by experienced leadership, expanding our footprint in non-ferrous and wire manufacturing.</p>
             </div>
+
+            {PHOTOS.length > 0 ? (
+              <div className="showcase-gallery">
+                {PHOTOS.map((src, i) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={'Company photo ' + (i + 1)}
+                    loading="lazy"
+                    decoding="async"
+                    onClick={() => setLightboxSrc(src)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                No pictures yet. Add images to <code>src/assets/photos</code>.
+              </p>
+            )}
+
+            {lightboxSrc && (
+              <div className="showcase-lightbox" onClick={() => setLightboxSrc(null)}>
+                <img src={lightboxSrc} alt="Company photo enlarged" />
+              </div>
+            )}
           </section>
         )}
       </div>

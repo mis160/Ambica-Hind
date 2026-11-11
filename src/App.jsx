@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import './SlideshowFill.css';
 import ceoImage from './assets/ceo.jpg';
 import LoginScreen from './LoginScreen.jsx';
 import HubHome from './hub/HubHome.jsx';
@@ -8,11 +7,11 @@ import ToolsCalculators from './hub/ToolsCalculators.jsx';
 import AppBackdrop from './backdrop/AppBackdrop.jsx';
 import FestivalGreeting from './festive/FestivalGreeting.jsx';
 import useFestival from './festive/useFestival.js';
-import WireDashboard from './wire/WireDashboard.jsx';
 import ProductionLinks from './hub/ProductionLinks.jsx';
-import ZnoOps from './zno/ZnoOps.jsx';
+import ProductionZone from './production/ProductionZone.jsx';
 import SalesZone from './sales/SalesZone.jsx';
 
+// Plant pictures: still used by the login screen (the home page background list picks them up in AppBackdrop.jsx)
 const plantImagesModules = import.meta.glob('./assets/Plant*.{jpg,jpeg,png,JPG,PNG}', { eager: true });
 const COMPANY_SLIDES = Object.values(plantImagesModules).map((mod) => ({
   url: mod.default
@@ -71,25 +70,22 @@ function App() {
   const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'home');
   const [error, setError] = useState('');
 
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [timeStr, setTimeStr] = useState('');
   const [dateStr, setDateStr] = useState('');
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedHolidayInfo, setSelectedHolidayInfo] = useState(null);
 
-  // Production dropdown states
+  // Production dropdown state
   const [prodUnit, setProdUnit] = useState(() => {
     const email = localStorage.getItem('userEmail');
     if (email === 'wire.works@ambahind.com') return 'Wire Plant (WD)';
     return 'Zinc Oxide (ZNO)';
   });
-  const [znoSubView, setZnoSubView] = useState('crucible');
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
   const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
-  const [liveProdDash, setLiveProdDash] = useState([]);
   const [livePanIndiaSales, setLivePanIndiaSales] = useState([]);
   const [liveRaipurZnSales, setLiveRaipurZnSales] = useState([]);
   const [liveRaipurPbSales, setLiveRaipurPbSales] = useState([]);
@@ -106,7 +102,7 @@ function App() {
   const [hrSearch, setHrSearch] = useState('');
   const [hrReloadKey, setHrReloadKey] = useState(0);
 
-  // Fetch production data
+  // Fetch ZNO costing data (crucibles + monthly costing)
   useEffect(() => {
     async function fetchLiveSpreadsheetData() {
       try {
@@ -121,7 +117,6 @@ function App() {
               data.monthlyCosting.filter(r => (r.oxide || 0) > 0 || (r.totalCost || 0) > 0)
             );
           }
-          if (Array.isArray(data.productionDashboard)) setLiveProdDash(data.productionDashboard);
         }
         setLoadError('');
       } catch (err) {
@@ -207,13 +202,6 @@ function App() {
     return () => { cancelled = true; };
   }, [activeModule, isLoggedIn, hrReloadKey]);
 
-  const emptyMessage = (label) => {
-    if (loadError) return loadError;
-    if (dataLoaded) return 'No ' + label + ' found.';
-    return 'Loading ' + label + '...';
-  };
-  const emptyColor = loadError ? '#dc2626' : '#64748b';
-
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
       setSelectedHolidayInfo(COMPANY_HOLIDAYS_2026[selectedDate]);
@@ -222,6 +210,7 @@ function App() {
     }
   }, [selectedDate]);
 
+  // IST clock (the old photo slideshow timer has been removed)
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -231,15 +220,8 @@ function App() {
       setDateStr(new Intl.DateTimeFormat('en-US', optionsDate).format(now));
     }, 1000);
 
-    const slideTimer = setInterval(() => {
-      if (COMPANY_SLIDES.length > 0) {
-        setCurrentSlide((prev) => (prev + 1) % COMPANY_SLIDES.length);
-      }
-    }, 4500);
-
     return () => {
       clearInterval(timer);
-      clearInterval(slideTimer);
     };
   }, []);
 
@@ -459,129 +441,15 @@ function App() {
                     )}
                   </select>
                 </div>
-
-                {prodUnit === 'Zinc Oxide (ZNO)' && (
-                  <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>ZNO Workbook Module View</label>
-                    <select value={znoSubView} onChange={(e) => setZnoSubView(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fef08a' }}>
-                      <option value="crucible">🔥 Crucible Life & History Tracker</option>
-                      <option value="monthlyCosting">📊 P5 & P7 All Costing Month Wise</option>
-                      <option value="productionDash">📈 Executive Production Dashboard</option>
-                      <option value="opsDash">📦 Production · Lab · Despatch Dashboard</option>
-                      <option value="labReport">🧪 Lab Test Report (Grade Y / N)</option>
-                      <option value="gradeReport">🏅 Grade Report (Pass / Fail reasons)</option>
-                      <option value="stock">📚 Actual Stock & Stock Book</option>
-                    </select>
-                  </div>
-                )}
               </div>
             </section>
 
             <ProductionLinks unit={prodUnit} />
 
-            {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'crucible' && (
-              <section style={{ ...panelStyle, overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>🔥 Crucible Life & History Tracker (Live from Google Sheet)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '600px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={thStyle}>Unit</th>
-                      <th style={thStyle}>Status</th>
-                      <th style={thStyle}>Active Crucible ID</th>
-                      <th style={thStyle}>Running Since</th>
-                      <th style={thStyle}>Days in Service</th>
-                      <th style={thStyle}>Oxide to Date (KG)</th>
-                      <th style={thStyle}>Recovery %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveCrucibles.length > 0 ? (
-                      liveCrucibles.map((row, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.unit}</td>
-                          <td style={{ padding: '10px', color: (row.status || '').includes('RUNNING') ? '#16a34a' : '#dc2626', fontWeight: 'bold' }}>{row.status || '—'}</td>
-                          <td style={{ padding: '10px' }}>{row.crucibleId || '—'}</td>
-                          <td style={{ padding: '10px' }}>{row.runningSince || '—'}</td>
-                          <td style={{ padding: '10px' }}>{row.daysInService || '—'}</td>
-                          <td style={{ padding: '10px' }}>{row.oxideToDate ? Number(row.oxideToDate).toLocaleString() : '—'}</td>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.recovery ? (Number(row.recovery) * 100).toFixed(1) + '%' : '—'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="7" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('crucible records')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-
-            {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'monthlyCosting' && (
-              <section style={{ ...panelStyle, overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📊 P5 & P7 All Costing Month Wise (Live from Google Sheet)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={thStyle}>Month</th>
-                      <th style={thStyle}>Dross (KG)</th>
-                      <th style={thStyle}>Oxide (KG)</th>
-                      <th style={thStyle}>Total Cost (₹)</th>
-                      <th style={thStyle}>Cost / KG (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveMonthlyCosting.length > 0 ? (
-                      liveMonthlyCosting.map((row, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.month}</td>
-                          <td style={{ padding: '10px' }}>{row.dross ? Number(row.dross).toLocaleString() : '0'}</td>
-                          <td style={{ padding: '10px' }}>{row.oxide ? Number(row.oxide).toLocaleString() : '0'}</td>
-                          <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹{row.totalCost ? Number(row.totalCost).toLocaleString() : '0'}</td>
-                          <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹{row.oxide > 0 && row.totalCost ? (Number(row.totalCost) / Number(row.oxide)).toFixed(2) : '0'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="5" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('monthly costing records')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-
-            {prodUnit === 'Zinc Oxide (ZNO)' && znoSubView === 'productionDash' && (
-              <section style={{ ...panelStyle, overflowX: 'auto' }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '16px' }}>📈 Executive Production Dashboard (Live from Google Sheet)</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', background: 'white', minWidth: '650px' }}>
-                  <thead>
-                    <tr style={{ background: '#f1f5f9', textAlign: 'left', color: '#334155', fontSize: '13px' }}>
-                      <th style={thStyle}>Month</th>
-                      <th style={thStyle}>Oxide Produced (KG)</th>
-                      <th style={thStyle}>Total Cost (₹)</th>
-                      <th style={thStyle}>Net Cost / KG (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {liveProdDash.length > 0 ? (
-                      liveProdDash.map((row, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-                          <td style={{ padding: '10px', fontWeight: 'bold' }}>{row.month}</td>
-                          <td style={{ padding: '10px' }}>{row.oxideProduced ? Number(row.oxideProduced).toLocaleString() : '0'}</td>
-                          <td style={{ padding: '10px', color: '#16a34a', fontWeight: 'bold' }}>₹{row.totalCost ? Number(row.totalCost).toLocaleString() : '0'}</td>
-                          <td style={{ padding: '10px', color: '#2563eb', fontWeight: 'bold' }}>₹{row.netCostPerKg ? Number(row.netCostPerKg).toFixed(2) : '0'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: emptyColor }}>{emptyMessage('production dashboard data')}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </section>
-            )}
-
-            {prodUnit === 'Zinc Oxide (ZNO)' && ['opsDash', 'labReport', 'gradeReport', 'stock'].includes(znoSubView) && (
-              <ZnoOps view={znoSubView} />
-            )}
-
-            {prodUnit !== 'Zinc Oxide (ZNO)' && <WireDashboard unit={prodUnit} />}
+            <ProductionZone
+              unit={prodUnit}
+              zno={{ crucibles: liveCrucibles, monthly: liveMonthlyCosting, loaded: dataLoaded, error: loadError }}
+            />
           </div>
         )}
 
@@ -773,21 +641,6 @@ function App() {
             </div>
           </section>
         )}
-
-        {/* BOTTOM COMPANY PHOTO SLIDESHOW */}
-        <div className="bottom-slideshow-section">
-          <div
-            className="bottom-slideshow-container"
-            style={COMPANY_SLIDES.length > 0 ? { '--slide-url': `url("${COMPANY_SLIDES[currentSlide]?.url}")` } : undefined}
-          >
-            {COMPANY_SLIDES.length > 0 ? (
-              <img src={COMPANY_SLIDES[currentSlide]?.url} alt="Company Slide" />
-            ) : (
-              <p style={{ color: '#fff' }}>Loading gallery images...</p>
-            )}
-          </div>
-        </div>
-
       </div>
     </div>
   );

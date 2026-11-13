@@ -271,13 +271,107 @@ function MarginCalc() {
   );
 }
 
+// ---------- NEW: Metal Rates & Market Links ----------
+function MetalRatesLinks() {
+  const linkStyle = {
+    display: 'block',
+    padding: '10px 14px',
+    marginBottom: '8px',
+    background: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '8px',
+    color: '#0f172a',
+    textDecoration: 'none',
+    fontWeight: 600,
+    fontSize: '13px',
+    transition: 'all 0.15s'
+  };
+
+  const cardStyle = {
+    background: 'white',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    padding: '18px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+  };
+
+  return (
+    <div>
+      <h3 className="tool-title">Metal Rates & Market Links</h3>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+        
+        {/* Moneycontrol Card */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+            <span style={{ fontSize: '22px' }}>🇮🇳</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#0f172a' }}>Moneycontrol</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>Indian commodity rates (MCX)</div>
+            </div>
+          </div>
+
+          <a href="https://www.moneycontrol.com/commodity/" target="_blank" rel="noreferrer" style={linkStyle}>
+            📊 All Commodities
+          </a>
+          <a href="https://www.moneycontrol.com/commodity/zinc-price.html" target="_blank" rel="noreferrer" style={linkStyle}>
+            🧪 Zinc (MCX)
+          </a>
+          <a href="https://www.moneycontrol.com/commodity/lead-price.html" target="_blank" rel="noreferrer" style={linkStyle}>
+            ⚙️ Lead (MCX)
+          </a>
+          <a href="https://www.moneycontrol.com/commodity/copper-price.html" target="_blank" rel="noreferrer" style={linkStyle}>
+            🔌 Copper (MCX)
+          </a>
+          <a href="https://www.moneycontrol.com/commodity/aluminium-price.html" target="_blank" rel="noreferrer" style={linkStyle}>
+            🧱 Aluminium (MCX)
+          </a>
+        </div>
+
+        {/* LME Card */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+            <span style={{ fontSize: '22px' }}>🌍</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '15px', color: '#0f172a' }}>London Metal Exchange</div>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>Global benchmark prices</div>
+            </div>
+          </div>
+
+          <a href="https://www.lme.com/en/Metals/Non-ferrous/LME-Zinc" target="_blank" rel="noreferrer" style={linkStyle}>
+            🧪 LME Zinc
+          </a>
+          <a href="https://www.lme.com/en/Metals/Non-ferrous/LME-Lead" target="_blank" rel="noreferrer" style={linkStyle}>
+            ⚙️ LME Lead
+          </a>
+          <a href="https://www.lme.com/en/Metals/Non-ferrous/LME-Copper" target="_blank" rel="noreferrer" style={linkStyle}>
+            🔌 LME Copper
+          </a>
+          <a href="https://www.lme.com/en/Metals/Non-ferrous/LME-Aluminium" target="_blank" rel="noreferrer" style={linkStyle}>
+            🧱 LME Aluminium
+          </a>
+          <a href="https://www.lme.com/en/Metals" target="_blank" rel="noreferrer" style={linkStyle}>
+            📈 All LME Metals
+          </a>
+        </div>
+      </div>
+
+      <p className="tool-note" style={{ marginTop: '16px' }}>
+        Links open in a new tab. Moneycontrol shows live Indian (MCX) rates. LME shows the global benchmark prices used worldwide.
+      </p>
+    </div>
+  );
+}
+
+// ---------- Tools list ----------
 const TOOLS = [
   { id: 'qty', label: '⚖️ Quantity & amount', Component: QuantityAmountCalc },
   { id: 'gst', label: '🧾 GST', Component: GstCalc },
   { id: 'wire', label: '🔩 Wire weight', Component: WireWeightCalc },
   { id: 'zinc', label: '🧪 Zinc for GI wire', Component: ZincCalc },
   { id: 'recovery', label: '♻️ Recovery & cost', Component: RecoveryCalc },
-  { id: 'margin', label: '📈 Margin & rate', Component: MarginCalc }
+  { id: 'margin', label: '📈 Margin & rate', Component: MarginCalc },
+  { id: 'rates', label: '📡 Metal Rates', Component: MetalRatesLinks }   // ← NEW TAB
 ];
 
 export default function ToolsCalculators() {

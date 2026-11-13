@@ -40,7 +40,9 @@ const AUTHORIZED_USERS = [
   { email: 'mkt@ambahind.com', role: 'Sales', password: 'mkt123' },
   { email: 'costing@ambahind.com', role: 'Production & Despatch', password: 'costing123' },
   { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' },
-  { email: 'wire.works@ambahind.com', role: 'Production & Despatch', password: 'wire123' }
+  { email: 'wire.works@ambahind.com', role: 'Production & Despatch', password: 'wire123' },
+  { email: 'arun@ambahind.com', role: 'Admin', password: 'admin123' },
+  { email: 'bikash@ambahind.com', role: 'Admin', password: 'admin123' },
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
@@ -65,7 +67,13 @@ function App() {
   const [userRole, setUserRole] = useState(() => localStorage.getItem('userRole') || '');
   const [userEmail, setUserEmail] = useState(() => localStorage.getItem('userEmail') || '');
   const [userAvatar, setUserAvatar] = useState(() => localStorage.getItem('userAvatar') || '');
-  const [activeModule, setActiveModule] = useState(() => localStorage.getItem('activeModule') || 'home');
+  const [activeModule, setActiveModule] = useState(() => {
+    const saved = localStorage.getItem('activeModule') || 'home';
+    return saved === 'panIndia' || saved === 'raipur' ? 'sales' : saved;
+  });
+  const [salesView, setSalesView] = useState(() =>
+    localStorage.getItem('activeModule') === 'raipur' ? 'raipur' : 'panIndia'
+  );
   const [error, setError] = useState('');
   const [lightboxSrc, setLightboxSrc] = useState(null);
 
@@ -280,6 +288,15 @@ function App() {
   const canSeeRaipur   = isMkt || (!isZincOrPiyali && (userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales'));
   const canSeeHr = !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR');
 
+  // One "All Sales" tab with a dropdown: only the zones this user is allowed to see
+  const salesOptions = [];
+  if (canSeePanIndia) salesOptions.push({ key: 'panIndia', label: '🌐 PAN India' });
+  if (canSeeRaipur) salesOptions.push({ key: 'raipur', label: '🏭 Raipur' });
+  const canSeeSales = salesOptions.length > 0;
+  const currentSalesView = salesOptions.some((o) => o.key === salesView)
+    ? salesView
+    : (salesOptions[0] ? salesOptions[0].key : '');
+
   // HR derived values (plain computations – no hooks)
   const hrCandidates = hrData.candidates;
   const hrDocuments = hrData.documents;
@@ -393,12 +410,8 @@ function App() {
             <button onClick={() => setActiveModule('production')} style={navStyle('production', '#ea580c')}>Production & Despatch</button>
           )}
 
-          {canSeePanIndia && (
-            <button onClick={() => setActiveModule('panIndia')} style={navStyle('panIndia', '#16a34a')}>🌐 PAN India</button>
-          )}
-
-          {canSeeRaipur && (
-            <button onClick={() => setActiveModule('raipur')} style={navStyle('raipur', '#0d9488')}>🏭 Raipur</button>
+          {canSeeSales && (
+            <button onClick={() => setActiveModule('sales')} style={navStyle('sales', '#16a34a')}>💼 All Sales</button>
           )}
 
           {canSeeHr && (
@@ -452,31 +465,56 @@ function App() {
           </div>
         )}
 
-        {/* ===================== PAN INDIA (month-wise dashboard) ===================== */}
-        {activeModule === 'panIndia' && canSeePanIndia && (
-          <SalesZone
-            zone="panIndia"
-            accent="#16a34a"
-            formUrl={PAN_INDIA_FORM_URL}
-            formOnly={isZincOrPiyali}
-            panRows={livePanIndiaSales}
-            loaded={salesLoaded}
-            error={salesErrors.panIndia}
-          />
-        )}
+        {/* ===================== ALL SALES (dropdown: PAN India / Raipur) ===================== */}
+        {activeModule === 'sales' && canSeeSales && (
+          <div>
+            {salesOptions.length > 1 && (
+              <section style={{ ...panelStyle, marginBottom: '20px' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#1e293b', fontSize: '16px' }}>Sales Zone</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', marginBottom: '5px', color: '#334155' }}>Select Sales Zone</label>
+                    <select
+                      value={currentSalesView}
+                      onChange={(e) => setSalesView(e.target.value)}
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    >
+                      {salesOptions.map((o) => (
+                        <option key={o.key} value={o.key}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </section>
+            )}
 
-        {/* ===================== RAIPUR (month-wise dashboard) ===================== */}
-        {activeModule === 'raipur' && canSeeRaipur && (
-          <SalesZone
-            zone="raipur"
-            accent="#0d9488"
-            formUrl={RAIPUR_FORM_URL}
-            formOnly={isMkt}
-            znRows={liveRaipurZnSales}
-            pbRows={liveRaipurPbSales}
-            loaded={salesLoaded}
-            error={salesErrors.raipur}
-          />
+            {currentSalesView === 'panIndia' && (
+              <SalesZone
+                key="panIndia"
+                zone="panIndia"
+                accent="#16a34a"
+                formUrl={PAN_INDIA_FORM_URL}
+                formOnly={isZincOrPiyali}
+                panRows={livePanIndiaSales}
+                loaded={salesLoaded}
+                error={salesErrors.panIndia}
+              />
+            )}
+
+            {currentSalesView === 'raipur' && (
+              <SalesZone
+                key="raipur"
+                zone="raipur"
+                accent="#0d9488"
+                formUrl={RAIPUR_FORM_URL}
+                formOnly={isMkt}
+                znRows={liveRaipurZnSales}
+                pbRows={liveRaipurPbSales}
+                loaded={salesLoaded}
+                error={salesErrors.raipur}
+              />
+            )}
+          </div>
         )}
 
         {/* ===================== HR (LIVE FROM JOINING KIT SHEET) ===================== */}

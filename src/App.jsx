@@ -92,7 +92,8 @@ function App() {
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
-  const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
+    const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
+  const [liveZnoDash, setLiveZnoDash] = useState(null);
   const [livePanIndiaSales, setLivePanIndiaSales] = useState([]);
   const [liveRaipurZnSales, setLiveRaipurZnSales] = useState([]);
   const [liveRaipurPbSales, setLiveRaipurPbSales] = useState([]);
@@ -118,7 +119,8 @@ function App() {
         const data = await response.json();
         if (data && data.error) throw new Error(data.error);
         if (data) {
-          if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
+                    if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
+          if (data.znoDash) setLiveZnoDash(data.znoDash);
           if (Array.isArray(data.monthlyCosting)) {
             setLiveMonthlyCosting(
               data.monthlyCosting.filter(r => (r.oxide || 0) > 0 || (r.totalCost || 0) > 0)
@@ -460,7 +462,7 @@ function App() {
 
             <ProductionZone
               unit={prodUnit}
-              zno={{ crucibles: liveCrucibles, monthly: liveMonthlyCosting, loaded: dataLoaded, error: loadError }}
+                            zno={{ crucibles: liveCrucibles, monthly: liveMonthlyCosting, dash: liveZnoDash, loaded: dataLoaded, error: loadError }}
             />
           </div>
         )}

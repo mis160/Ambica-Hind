@@ -37,7 +37,7 @@ export default function HubHome({ userRole, userEmail }) {
   const canEditRates = RATE_EDITORS.includes(userRole);
 
   const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
-  const isMkt = userEmail === 'mkt@ambahind.com';
+  const isMkt = userEmail === 'mkt@ambahind.com' || userEmail === 'bikash@ambahind.com';
 
   const [data, setData] = useState({ notices: [], rates: [], links: [] });
   const [loading, setLoading] = useState(connected);

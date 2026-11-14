@@ -42,7 +42,8 @@ const AUTHORIZED_USERS = [
   { email: 'zincoxide@ambahind.com', role: 'Sales', password: 'zinc123' },
   { email: 'wire.works@ambahind.com', role: 'Production & Despatch', password: 'wire123' },
   { email: 'arun@ambahind.com', role: 'Admin', password: 'admin123' },
-  { email: 'bikash@ambahind.com', role: 'Admin', password: 'admin123' },
+  { email: 'bikash@ambahind.com', role: 'Sales', password: 'admin123' },
+  { email: 'manishagarwal@ambahind.com', role: 'Production & Despatch', password: 'admin123' },
 ];
 
 const PRODUCTION_API_URL = "https://script.google.com/macros/s/AKfycbxK42iczXYEHwbIEWTGQVytwqWspVVZpSAImZQbvbicvyjZ3aVoAzd25mkXu0e4-AQJ/exec?action=data";
@@ -54,6 +55,14 @@ const HR_API_URL = "https://script.google.com/macros/s/AKfycbxcl3BNhQ56I46erm-_O
 
 const PAN_INDIA_FORM_URL = "https://script.google.com/macros/s/AKfycbxy7TO_ADeG7aU64ASkY5WRAppQhZJoAoSqzDI5PfyDg6QTABgc1nVAo8yBOheUXLP1/exec";
 const RAIPUR_FORM_URL = "https://script.google.com/macros/s/AKfycbyH6XdwNHc-YptB6gVwX-ZKTa1OdiUxL1AWSe_WaRJNp6-5qKPrqP01x412j2BVsFWy/exec";
+
+// ---- Email based access rules ----
+// These emails see everything under PAN India (dashboard + form) and nothing of Raipur
+const PAN_INDIA_ONLY_EMAILS = ['piyali@ambahind.com', 'zincoxide@ambahind.com'];
+// These emails see everything under Raipur (dashboard + form) and nothing of PAN India
+const RAIPUR_ONLY_EMAILS = ['mkt@ambahind.com', 'bikash@ambahind.com'];
+// These emails see only Home, Tools and the "Production · Lab · Despatch" screen
+const OPS_ONLY_EMAILS = ['manishagarwal@ambahind.com'];
 
 const panelStyle = { background: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' };
 const thStyle = { padding: '10px' };
@@ -92,7 +101,7 @@ function App() {
 
   // Live Sheet Data States
   const [liveCrucibles, setLiveCrucibles] = useState([]);
-    const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
+  const [liveMonthlyCosting, setLiveMonthlyCosting] = useState([]);
   const [liveZnoDash, setLiveZnoDash] = useState(null);
   const [livePanIndiaSales, setLivePanIndiaSales] = useState([]);
   const [liveRaipurZnSales, setLiveRaipurZnSales] = useState([]);
@@ -110,8 +119,27 @@ function App() {
   const [hrSearch, setHrSearch] = useState('');
   const [hrReloadKey, setHrReloadKey] = useState(0);
 
-  // Fetch ZNO costing data (crucibles + monthly costing)
+  // ===================== ACCESS RULES (by email) =====================
+  const isPanIndiaOnly = PAN_INDIA_ONLY_EMAILS.includes(userEmail);   // piyali, zincoxide
+  const isRaipurOnly = RAIPUR_ONLY_EMAILS.includes(userEmail);        // mkt
+    const isRestrictedAccounts = isPanIndiaOnly || isRaipurOnly;
+  const isOpsOnly = OPS_ONLY_EMAILS.includes(userEmail);
+  const hideShowcase = isRestrictedAccounts || isOpsOnly;
+  const isCostingUser = userEmail === 'costing@ambahind.com';
+  const isWireWorksUser = userEmail === 'wire.works@ambahind.com';
+  const salesRole = userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales';
+
+  const canSeeProduction =
+    !isRestrictedAccounts &&
+    ['Admin', 'Production', 'Production & Despatch'].includes(userRole);
+
+  const canSeePanIndia = isPanIndiaOnly || (!isRaipurOnly && salesRole);
+  const canSeeRaipur = isRaipurOnly || (!isPanIndiaOnly && salesRole);
+  const canSeeHr = !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR');
+
+  // Fetch ZNO costing data (crucibles + monthly costing) - only for users who can open Production
   useEffect(() => {
+        if (!isLoggedIn || !canSeeProduction || isOpsOnly) return;
     async function fetchLiveSpreadsheetData() {
       try {
         const response = await fetch(PRODUCTION_API_URL);
@@ -119,7 +147,7 @@ function App() {
         const data = await response.json();
         if (data && data.error) throw new Error(data.error);
         if (data) {
-                    if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
+          if (Array.isArray(data.crucibles)) setLiveCrucibles(data.crucibles);
           if (data.znoDash) setLiveZnoDash(data.znoDash);
           if (Array.isArray(data.monthlyCosting)) {
             setLiveMonthlyCosting(
@@ -136,10 +164,12 @@ function App() {
       }
     }
     fetchLiveSpreadsheetData();
-  }, []);
+  }, [isLoggedIn, canSeeProduction, isOpsOnly]);
 
-  // Fetch sales data
+  // Fetch sales data - only the zones this user is allowed to see
   useEffect(() => {
+    if (!isLoggedIn || (!canSeePanIndia && !canSeeRaipur)) return;
+
     async function getJson(url) {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Server responded with status ' + response.status);
@@ -151,36 +181,45 @@ function App() {
 
     async function fetchSalesData() {
       const errors = { panIndia: '', raipur: '' };
+      const jobs = [];
 
-      const panIndiaJob = getJson(PAN_INDIA_API_URL)
-        .then((data) => { if (Array.isArray(data.panIndiaSales)) setLivePanIndiaSales(data.panIndiaSales); })
-        .catch((err) => {
-          console.error('Error loading PAN India sales:', err);
-          errors.panIndia = 'Could not load PAN India sales (' + msg(err) + ').';
-        });
-
-      const raipurJob = RAIPUR_API_URL
-        ? getJson(RAIPUR_API_URL)
-            .then((data) => {
-              if (Array.isArray(data.raipurZnSales)) setLiveRaipurZnSales(data.raipurZnSales);
-              if (Array.isArray(data.raipurPbSales)) setLiveRaipurPbSales(data.raipurPbSales);
-            })
+      if (canSeePanIndia) {
+        jobs.push(
+          getJson(PAN_INDIA_API_URL)
+            .then((data) => { if (Array.isArray(data.panIndiaSales)) setLivePanIndiaSales(data.panIndiaSales); })
             .catch((err) => {
-              console.error('Error loading Raipur sales:', err);
-              errors.raipur = 'Could not load Raipur sales (' + msg(err) + ').';
+              console.error('Error loading PAN India sales:', err);
+              errors.panIndia = 'Could not load PAN India sales (' + msg(err) + ').';
             })
-        : Promise.resolve().then(() => { errors.raipur = 'Raipur sales data source is not connected yet.'; });
+        );
+      }
 
-      await Promise.all([panIndiaJob, raipurJob]);
+      if (canSeeRaipur) {
+        jobs.push(
+          RAIPUR_API_URL
+            ? getJson(RAIPUR_API_URL)
+                .then((data) => {
+                  if (Array.isArray(data.raipurZnSales)) setLiveRaipurZnSales(data.raipurZnSales);
+                  if (Array.isArray(data.raipurPbSales)) setLiveRaipurPbSales(data.raipurPbSales);
+                })
+                .catch((err) => {
+                  console.error('Error loading Raipur sales:', err);
+                  errors.raipur = 'Could not load Raipur sales (' + msg(err) + ').';
+                })
+            : Promise.resolve().then(() => { errors.raipur = 'Raipur sales data source is not connected yet.'; })
+        );
+      }
+
+      await Promise.all(jobs);
       setSalesErrors(errors);
       setSalesLoaded(true);
     }
     fetchSalesData();
-  }, []);
+  }, [isLoggedIn, canSeePanIndia, canSeeRaipur]);
 
   // Fetch HR data – only when the HR tab is opened (and on Refresh)
   useEffect(() => {
-    if (!isLoggedIn || activeModule !== 'hr') return;
+    if (!isLoggedIn || activeModule !== 'hr' || !canSeeHr) return;
     let cancelled = false;
 
     (async () => {
@@ -209,7 +248,7 @@ function App() {
     })();
 
     return () => { cancelled = true; };
-  }, [activeModule, isLoggedIn, hrReloadKey]);
+  }, [activeModule, isLoggedIn, hrReloadKey, canSeeHr]);
 
   useEffect(() => {
     if (COMPANY_HOLIDAYS_2026[selectedDate]) {
@@ -242,7 +281,7 @@ function App() {
     );
 
     if (matchedUser) {
-      if (matchedUser.email === 'costing@ambahind.com') {
+      if (matchedUser.email === 'costing@ambahind.com' || OPS_ONLY_EMAILS.includes(matchedUser.email)) {
         setProdUnit('Zinc Oxide (ZNO)');
       } else if (matchedUser.email === 'wire.works@ambahind.com') {
         setProdUnit('Wire Plant (WD)');
@@ -263,6 +302,9 @@ function App() {
       setActiveModule(initialModule);
       localStorage.setItem('activeModule', initialModule);
 
+      // start the sales view on a zone this user may open
+      setSalesView(RAIPUR_ONLY_EMAILS.includes(matchedUser.email) ? 'raipur' : 'panIndia');
+
       setError('');
     } else {
       setError('Unauthorized email or incorrect password. Please check your credentials.');
@@ -271,24 +313,18 @@ function App() {
 
   const handleLogout = () => {
     localStorage.clear();
+    // do not keep one user's data in memory for the next person who logs in
+    setLivePanIndiaSales([]);
+    setLiveRaipurZnSales([]);
+    setLiveRaipurPbSales([]);
+    setLiveCrucibles([]);
+    setLiveMonthlyCosting([]);
+    setLiveZnoDash(null);
+    setSalesLoaded(false);
+    setDataLoaded(false);
+    setPassword('');
     setIsLoggedIn(false);
   };
-
-  // Specific Account User Restrictions
-  const isZincOrPiyali = userEmail === 'zincoxide@ambahind.com' || userEmail === 'piyali@ambahind.com';
-  const isMkt = userEmail === 'mkt@ambahind.com';
-  const isRestrictedAccounts = isZincOrPiyali || isMkt;
-  const isCostingUser = userEmail === 'costing@ambahind.com';
-  const isWireWorksUser = userEmail === 'wire.works@ambahind.com';
-
-  // Who can open which modules
-  const canSeeProduction =
-    !isRestrictedAccounts &&
-    ['Admin', 'Production', 'Production & Despatch'].includes(userRole);
-
-  const canSeePanIndia = isZincOrPiyali || (!isMkt && (userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales'));
-  const canSeeRaipur   = isMkt || (!isZincOrPiyali && (userRole === 'Admin' || userRole === 'Accounts' || userRole === 'Sales'));
-  const canSeeHr = !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR');
 
   // One "All Sales" tab with a dropdown: only the zones this user is allowed to see
   const salesOptions = [];
@@ -422,8 +458,8 @@ function App() {
 
           <button onClick={() => setActiveModule('tools')} style={navStyle('tools', '#0891b2')}>🧰 Tools</button>
 
-          {!isRestrictedAccounts && (
-            <button onClick={() => setActiveModule('showcase')} style={navStyle('showcase', '#db2777')}>🖼️ Company Showcase</button>
+          {!hideShowcase && (
+          <button onClick={() => setActiveModule('showcase')}
           )}
         </nav>
 
@@ -447,7 +483,7 @@ function App() {
                     {!isWireWorksUser && (
                       <option value="Zinc Oxide (ZNO)">Zinc Oxide (ZNO)</option>
                     )}
-                    {!isCostingUser && (
+                      {!isCostingUser && !isOpsOnly && (
                       <>
                         <option value="Wire Plant (WD)">Wire Plant (WD)</option>
                         <option value="Galvanizing (GI)">Galvanizing (GI)</option>
@@ -458,11 +494,12 @@ function App() {
               </div>
             </section>
 
-            <ProductionLinks unit={prodUnit} />
+             {!isOpsOnly && <ProductionLinks unit={prodUnit} />}
 
             <ProductionZone
               unit={prodUnit}
-                            zno={{ crucibles: liveCrucibles, monthly: liveMonthlyCosting, dash: liveZnoDash, loaded: dataLoaded, error: loadError }}
+              zno={{ crucibles: liveCrucibles, monthly: liveMonthlyCosting, dash: liveZnoDash, loaded: dataLoaded, error: loadError }}
+              opsOnly={isOpsOnly}
             />
           </div>
         )}
@@ -490,26 +527,26 @@ function App() {
               </section>
             )}
 
-            {currentSalesView === 'panIndia' && (
+            {/* PAN India: full dashboard + form for piyali / zincoxide (and Admin / Accounts / Sales roles) */}
+            {currentSalesView === 'panIndia' && canSeePanIndia && (
               <SalesZone
                 key="panIndia"
                 zone="panIndia"
                 accent="#16a34a"
                 formUrl={PAN_INDIA_FORM_URL}
-                formOnly={isZincOrPiyali}
                 panRows={livePanIndiaSales}
                 loaded={salesLoaded}
                 error={salesErrors.panIndia}
               />
             )}
 
-            {currentSalesView === 'raipur' && (
+            {/* Raipur: full dashboard + form for mkt (and Admin / Accounts / Sales roles) */}
+            {currentSalesView === 'raipur' && canSeeRaipur && (
               <SalesZone
                 key="raipur"
                 zone="raipur"
                 accent="#0d9488"
                 formUrl={RAIPUR_FORM_URL}
-                formOnly={isMkt}
                 znRows={liveRaipurZnSales}
                 pbRows={liveRaipurPbSales}
                 loaded={salesLoaded}
@@ -647,7 +684,7 @@ function App() {
         )}
 
         {/* ===================== SHOWCASE ===================== */}
-        {activeModule === 'showcase' && !isRestrictedAccounts && (
+                {activeModule === 'showcase' && !hideShowcase && (
           <section style={{ ...panelStyle, borderRadius: '12px' }}>
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <h2 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '20px' }}>AMBICA-HIND ✦ Plant Gallery & Leadership</h2>

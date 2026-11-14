@@ -9,9 +9,9 @@ import { OPS_API_URL, WIRE_API_URL } from './prodConfig.js';
 // unit = value of the "Manufacturing Unit" dropdown in App.jsx
 // zno  = { crucibles, monthly, dash, loaded, error }  (already loaded by App.jsx from the ZNO costing script;
 //        dash = the "znoDash" block of that feed: FY totals, 12 months, furnaces, crucible history)
-export default function ProductionZone({ unit, zno }) {
+export default function ProductionZone({ unit, zno, opsOnly = false }) {
   const isZno = unit === 'Zinc Oxide (ZNO)';
-  const [view, setView] = useState('cost');
+  const [view, setView] = useState(opsOnly ? 'ops' : 'cost');
   const ops = useJson(OPS_API_URL, isZno && view === 'ops');
   const wire = useJson(WIRE_API_URL, !isZno);
 
@@ -19,7 +19,9 @@ export default function ProductionZone({ unit, zno }) {
     return (
       <div className="pz-root" style={{ '--pz': '#ea580c' }}>
         <Pills accent="#ea580c" value={view} onChange={setView}
-          items={[['cost', '🔥 ZNO Costing & Crucibles'], ['dash', '📈 FY Dashboard'], ['cruc', '🧱 Crucibles'], ['ops', '📦 Production · Lab · Despatch']]} />
+          items={opsOnly
+            ? [['ops', '📦 Production · Lab · Despatch']]
+            : [['cost', '🔥 ZNO Costing & Crucibles'], ['dash', '📈 FY Dashboard'], ['cruc', '🧱 Crucibles'], ['ops', '📦 Production · Lab · Despatch']]} />
         {view === 'cost' && (
           <ZnoCostingZone crucibles={zno.crucibles} monthly={zno.monthly} loaded={zno.loaded} error={zno.error} />
         )}

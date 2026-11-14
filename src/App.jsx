@@ -121,9 +121,9 @@ function App() {
 
   // ===================== ACCESS RULES (by email) =====================
   const isPanIndiaOnly = PAN_INDIA_ONLY_EMAILS.includes(userEmail);   // piyali, zincoxide
-  const isRaipurOnly = RAIPUR_ONLY_EMAILS.includes(userEmail);        // mkt
-    const isRestrictedAccounts = isPanIndiaOnly || isRaipurOnly;
-  const isOpsOnly = OPS_ONLY_EMAILS.includes(userEmail);
+  const isRaipurOnly = RAIPUR_ONLY_EMAILS.includes(userEmail);        // mkt, bikash
+  const isOpsOnly = OPS_ONLY_EMAILS.includes(userEmail);              // manishagarwal
+  const isRestrictedAccounts = isPanIndiaOnly || isRaipurOnly;
   const hideShowcase = isRestrictedAccounts || isOpsOnly;
   const isCostingUser = userEmail === 'costing@ambahind.com';
   const isWireWorksUser = userEmail === 'wire.works@ambahind.com';
@@ -133,13 +133,14 @@ function App() {
     !isRestrictedAccounts &&
     ['Admin', 'Production', 'Production & Despatch'].includes(userRole);
 
-  const canSeePanIndia = isPanIndiaOnly || (!isRaipurOnly && salesRole);
-  const canSeeRaipur = isRaipurOnly || (!isPanIndiaOnly && salesRole);
-  const canSeeHr = !isRestrictedAccounts && (userRole === 'Admin' || userRole === 'HR');
+  const canSeePanIndia = isPanIndiaOnly || (!isRaipurOnly && !isOpsOnly && salesRole);
+  const canSeeRaipur = isRaipurOnly || (!isPanIndiaOnly && !isOpsOnly && salesRole);
+  const canSeeHr = !isRestrictedAccounts && !isOpsOnly && (userRole === 'Admin' || userRole === 'HR');
 
   // Fetch ZNO costing data (crucibles + monthly costing) - only for users who can open Production
+  // (the ops-only user does not need the costing feed)
   useEffect(() => {
-        if (!isLoggedIn || !canSeeProduction || isOpsOnly) return;
+    if (!isLoggedIn || !canSeeProduction || isOpsOnly) return;
     async function fetchLiveSpreadsheetData() {
       try {
         const response = await fetch(PRODUCTION_API_URL);
@@ -459,7 +460,7 @@ function App() {
           <button onClick={() => setActiveModule('tools')} style={navStyle('tools', '#0891b2')}>🧰 Tools</button>
 
           {!hideShowcase && (
-          <button onClick={() => setActiveModule('showcase')}
+            <button onClick={() => setActiveModule('showcase')} style={navStyle('showcase', '#db2777')}>🖼️ Company Showcase</button>
           )}
         </nav>
 
@@ -483,7 +484,7 @@ function App() {
                     {!isWireWorksUser && (
                       <option value="Zinc Oxide (ZNO)">Zinc Oxide (ZNO)</option>
                     )}
-                      {!isCostingUser && !isOpsOnly && (
+                    {!isCostingUser && !isOpsOnly && (
                       <>
                         <option value="Wire Plant (WD)">Wire Plant (WD)</option>
                         <option value="Galvanizing (GI)">Galvanizing (GI)</option>
@@ -494,7 +495,7 @@ function App() {
               </div>
             </section>
 
-             {!isOpsOnly && <ProductionLinks unit={prodUnit} />}
+            {!isOpsOnly && <ProductionLinks unit={prodUnit} />}
 
             <ProductionZone
               unit={prodUnit}
@@ -540,7 +541,7 @@ function App() {
               />
             )}
 
-            {/* Raipur: full dashboard + form for mkt (and Admin / Accounts / Sales roles) */}
+            {/* Raipur: full dashboard + form for mkt / bikash (and Admin / Accounts / Sales roles) */}
             {currentSalesView === 'raipur' && canSeeRaipur && (
               <SalesZone
                 key="raipur"
@@ -684,7 +685,7 @@ function App() {
         )}
 
         {/* ===================== SHOWCASE ===================== */}
-                {activeModule === 'showcase' && !hideShowcase && (
+        {activeModule === 'showcase' && !hideShowcase && (
           <section style={{ ...panelStyle, borderRadius: '12px' }}>
             <div style={{ textAlign: 'center', marginBottom: '25px' }}>
               <h2 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '20px' }}>AMBICA-HIND ✦ Plant Gallery & Leadership</h2>
